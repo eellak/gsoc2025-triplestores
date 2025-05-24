@@ -20,6 +20,6 @@ This demo showcases how to use GraphDB for:
 
 ### Running the Demo
 To run the demo script:
-```c
+```shell
 python graphdb_demo.py
 ```
