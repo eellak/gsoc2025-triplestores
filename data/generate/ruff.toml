@@ -1,0 +1,46 @@
+fix = false
+indent-width = 4
+line-length = 150
+# output-format = "full"
+output-format = "grouped"
+preview = true
+required-version = ">=0.9"
+show-fixes = true
+
+[format]
+docstring-code-format = false
+indent-style = "space"
+line-ending = "native"
+preview = true
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[lint]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+fixable = ["ALL"]
+ignore = [ "AIR", "ANN", "D", "NPY", "PD", "COM812", "RUF012" ]
+preview = true
+select = [ "ALL" ]
+unfixable = []
+
+[lint.per-file-ignores]
+"generate-data.py" = [
+	"G004",		# f-strings used in logging
+	"LOG015",	# root logger used
+	"S311",		# pseudo-random not suitable for crypto
+]
+
+[lint.isort]
+case-sensitive = true
+force-sort-within-sections = false
+from-first = false
+lines-between-types = 0
+split-on-trailing-comma = false
+
+# the following increases of limits are needed since the generating function is not split to steps
+[lint.mccabe]
+max-complexity = 18
+[lint.pylint]
+max-branches = 25
+max-statements = 55
+
