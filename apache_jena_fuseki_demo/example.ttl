@@ -1,0 +1,25 @@
+@prefix ex: <http://example.org/> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+ex:Human a rdfs:Class .
+foaf:Person rdfs:subClassOf ex:Human .
+
+ex:Alice a foaf:Person ;
+         foaf:name "Alice" .
+
+ex:Alice a foaf:Person ;
+    foaf:name "Alice" ;
+    foaf:mbox <mailto:alice@example.org> ;
+    foaf:age "25" .
+
+ex:Bob a foaf:Person ;
+    foaf:name "Bob" ;
+    foaf:mbox <mailto:bob@example.org> ;
+    foaf:age "31" .
+
+ex:Charlie a foaf:Person ;
+    foaf:name "Charlie" ;
+    foaf:mbox <mailto:charlie@example.org> ;
+    foaf:age "40" .
