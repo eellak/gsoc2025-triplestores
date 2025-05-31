@@ -1,0 +1,92 @@
+:name		rdf:type  owl:FunctionalProperty .
+:sex		rdf:type  owl:FunctionalProperty .
+:husband	rdf:type  owl:FunctionalProperty .
+:wife		rdf:type  owl:FunctionalProperty .
+
+:Man	rdfs:subClassOf :Person .
+:Woman	rdfs:subClassOf :Person .
+
+[]		rdf:type    owl:AllDisjointClasses ;
+		owl:members  ( :Man :Woman ) . 
+
+:Man  owl:equivalentClass  [
+		rdf:type        owl:Restriction ;
+		owl:onProperty  :sex ;
+		owl:hasValue    :male
+] .
+:Woman  owl:equivalentClass  [
+		rdf:type        owl:Restriction ;
+		owl:onProperty  :sex ;
+		owl:hasValue    :female
+] .
+
+:Parent	rdfs:subClassOf :Person .
+
+:Father	rdfs:subClassOf :Man .
+:Mother	rdfs:subClassOf :Woman .
+
+# new names for relationships between Families and Persons
+:hasMaleSpouse		owl:equivalentClass :husband .
+:isMaleSpouseIn		owl:inverseOf :hasMaleSpouse .
+:hasFemaleSpouse	owl:equivalentClass :wife .
+:isFemaleSpouseIn	owl:inverseOf :hasFemaleSpouse .
+:hasOffspring		owl:equivalentClass :child .
+:isOffspringIn		owl:inverseOf :hasOffspring .
+
+:Father owl:equivalentClass [
+		rdf:type owl:Restriction ;
+		owl:onProperty isMaleSpouseIn ;
+		owl:allValuesFrom [
+				a: owl:Restriction ;
+				owl:onProperty :hasOffspring ;
+				owl:someValuesFrom  :Person 
+		]
+] .
+:Mother owl:equivalentClass [
+		rdf:type owl:Restriction ;
+		owl:onProperty isFemaleSpouseIn ;
+		owl:allValuesFrom [
+				a: owl:Restriction ;
+				owl:onProperty :hasOffspring ;
+				owl:someValuesFrom  :Person 
+		]
+] .
+
+
+:Father	owl:equivalentClass  [
+		rdf:type			owl:Class ;
+		owl:intersectionOf	( :Man :Parent ) 
+] .
+:Mother	owl:equivalentClass  [
+		rdf:type			owl:Class ;
+		owl:intersectionOf	( :Woman :Parent ) 
+] .
+
+:Parent	owl:equivalentClass  [
+		rdf:type     owl:Class ;
+		owl:unionOf  ( :Father :Mother )
+] .
+
+:hasSpouse	rdf:type owl:ObjectProperty ;
+			rdfs:domain :Person ;
+			rdfs:range :Person .
+:hasSpouse  rdf:type	owl:SymmetricProperty .
+:hasSpouse  rdf:type	owl:IrreflexiveProperty .
+:hasSpouse	rdf:type	owl:FunctionalProperty .
+
+:hasWife	rdfs:subPropertyOf :hasSpouse .
+:hasWife	rdfs:domain :Man ;
+			rdfs:range  :Woman .
+:hasHusband	rdfs:subPropertyOf :hasSpouse .
+:hasHusband	rdfs:domain :Woman ;
+			rdfs:range  :Man .
+:hasWife	owl:inverseOf :hasHusband .
+
+
+# to expand further...
+:hasParent owl:inverseOf :hasChild .
+:hasAncestor  rdf:type  owl:TransitiveProperty .
+:hasGrandparent  owl:propertyChainAxiom  ( :hasParent  :hasParent ) .
+:hasUncle  owl:propertyChainAxiom  ( :hasFather  :hasBrother ) .
+:hasSon  owl:propertyDisjointWith  :hasDaughter .
+:hasFather  rdfs:subPropertyOf  :hasParent .

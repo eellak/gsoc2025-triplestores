@@ -1,0 +1,68 @@
+@prefix : <http://rdf.zvr.invalid/demofamilydata/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@base <http://rdf.zvr.invalid/demofamilydata/> .
+
+# With apologies for the very conservative and traditional definitions
+# of people, genders, and families.
+
+<http://rdf.zvr.invalid/demofamilydata> rdf:type owl:Ontology .
+
+#################################################################
+#    Object Properties
+
+###  http://rdf.zvr.invalid/demofamilydata#child
+:child rdf:type owl:ObjectProperty ;
+       rdfs:domain :Family ;
+       rdfs:range :Person .
+
+###  http://rdf.zvr.invalid/demofamilydata#husband
+:husband rdf:type owl:ObjectProperty ;
+         rdfs:domain :Family ;
+         rdfs:range :Person .
+
+###  http://rdf.zvr.invalid/demofamilydata#sex
+:sex rdf:type owl:ObjectProperty ;
+     rdfs:domain :Person ;
+     rdfs:range :Sex .
+
+###  http://rdf.zvr.invalid/demofamilydata#wife
+:wife rdf:type owl:ObjectProperty ;
+      rdfs:domain :Family ;
+      rdfs:range :Person .
+
+
+#################################################################
+#    Data properties
+
+###  http://rdf.zvr.invalid/demofamilydata#name
+:name rdf:type owl:DatatypeProperty ;
+      rdfs:domain :Person ;
+      rdfs:range xsd:string .
+
+
+#################################################################
+#    Classes
+
+###  http://rdf.zvr.invalid/demofamilydata#Family
+:Family rdf:type owl:Class .
+
+###  http://rdf.zvr.invalid/demofamilydata#Person
+:Person rdf:type owl:Class .
+
+###  http://rdf.zvr.invalid/demofamilydata#Sex
+:Sex rdf:type owl:Class .
+
+#################################################################
+#    Individuals
+
+###  http://rdf.zvr.invalid/demofamilydata#female
+:sex-female rdf:type owl:NamedIndividual ,
+                     :Sex .
+
+###  http://rdf.zvr.invalid/demofamilydata#male
+:sex-male rdf:type owl:NamedIndividual ,
+                   :Sex .
