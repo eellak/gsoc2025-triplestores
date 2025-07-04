@@ -32,7 +32,7 @@ HEADERS = {"Accept": "application/sparql-results+json"}
 
 def init():
     try:
-        subprocess.run(["./bench/allegrograph_init.sh"], check=True)
+        subprocess.run(["bash", "./bench/allegrograph_init.sh"], check=True)
     except subprocess.CalledProcessError as err:
         msg = f"Failed to create repo: {err}"
         raise RuntimeError(msg) from err
