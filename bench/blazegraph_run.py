@@ -66,7 +66,7 @@ def blazegraph_terminate():
         )
         pids = [line.strip() for line in out.splitlines() if line.strip().isdigit()]
         for pid in pids:
-            subprocess.run(["taskkill", "/PID", pid, "/F"], check=True)
+            subprocess.run(["taskkill", "/PID", pid, "/F"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except (subprocess.CalledProcessError, FileNotFoundError):
         logger.exception("Failed to kill blazegraph")
 

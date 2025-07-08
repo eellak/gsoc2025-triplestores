@@ -17,21 +17,33 @@ TRIPLESTORES: dict[str, TriplestoreSpec] = {
     "blazegraph": ("bench.blazegraph", "Blazegraph"),
     "oxigraph": ("bench.oxigraph", "Oxigraph"),
     "allegrograph": ("bench.allegrograph", "AllegroGraph"),
+    "milleniumdb": ("bench.milleniumDB", "MilleniumDB")
 }
 
 
 def run_benchmark(store_key: str) -> None:
     module_name, label = TRIPLESTORES[store_key]
 
-    if platform.system() == "Windows" and label.lower() == "allegrograph":
-        msg = (
-            f"\nBenchmarking {label}\n"
-            f"{label} is not supported on native Windows systems. "
-            "Run it via WSL or in a Linux environment.\n"
-            "Start the server with:\n"
-            "    ./bin/agraph-control --config ./lib/agraph.cfg start"
-        )
-        raise RuntimeError(msg)
+    if platform.system() == "Windows":
+        if label.lower() == "allegrograph":
+            msg = (
+                f"\nBenchmarking {label}\n"
+                f"{label} is not supported on native Windows systems. "
+                "Run it via WSL or in a Linux environment.\n"
+                "Start the server with:\n"
+                "    ./bin/agraph-control --config ./lib/agraph.cfg start"
+            )
+            print(msg)
+            return
+
+        if label.lower() == "milleniumdb":
+            msg = (
+                f"\nBenchmarking {label}\n"
+                f"{label} is not supported on native Windows systems. "
+                "Run it via WSL or in a Linux environment."
+            )
+            print(msg)
+            return
 
     try:
         module = importlib.import_module(module_name)
