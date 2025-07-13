@@ -7,8 +7,19 @@ authors = [
     { name = "Alexios Zavras (zvr)", email = "zvr+git@zvr.gr" }
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = ["requests"]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+    "build"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
