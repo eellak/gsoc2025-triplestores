@@ -4,6 +4,7 @@
 
 from typing import Any
 
+from .backends.graphdb import GraphDB
 from .backends.jena import Jena
 from .backends.oxigraph import Oxigraph
 from .base import TriplestoreBackend
@@ -16,6 +17,7 @@ def hello() -> str:
 _BACKENDS: dict[str, type[TriplestoreBackend]] = {
     "oxigraph": Oxigraph,
     "jena": Jena,
+    "graphdb": GraphDB,
 }
 
 
