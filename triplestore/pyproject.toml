@@ -1,14 +1,29 @@
 [project]
 name = "triplestore"
 version = "0.1.0"
-description = "Add your description here"
+description = "A unified abstraction layer for interacting with multiple RDF triplestore backends."
 readme = "README.md"
 authors = [
-    { name = "Alexios Zavras (zvr)", email = "zvr+git@zvr.gr" }
+    { name = "Alexios Zavras (zvr)", email = "zvr+git@zvr.gr" },
+    { name = "Maira Papadopoulou", email = "" },
 ]
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "requests",
+    "pyoxigraph"
+]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",
+    "mypy",
+    "build"
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
