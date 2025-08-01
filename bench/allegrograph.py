@@ -30,11 +30,14 @@ HEADERS = {"Accept": "application/sparql-results+json"}
 # implementation
 
 
-def init():
+def init(repo_name: str | None = None) -> None:
+    if repo_name is None:
+        repo_name = "test-repository"
+
     try:
-        subprocess.run(["./bench/allegrograph_init.sh"], check=True)
+        subprocess.run(["./bench/init_allegrograph_repo.sh", repo_name], check=True)
     except subprocess.CalledProcessError as err:
-        msg = f"Failed to create repo: {err}"
+        msg = f"[AllegroGraph] Failed to create repo '{repo_name}': {err}"
         raise RuntimeError(msg) from err
 
 
