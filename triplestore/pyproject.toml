@@ -10,7 +10,8 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "requests",
-    "pyoxigraph"
+    "pyoxigraph",
+    "rdflib"
 ]
 
 [build-system]
