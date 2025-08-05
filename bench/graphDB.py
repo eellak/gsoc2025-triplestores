@@ -16,6 +16,7 @@
 from pathlib import Path
 
 import requests
+from bench.graphDB_run import graphdb_run
 from bench.skeleton import bench_report, benchmark
 
 # configuration
@@ -41,6 +42,9 @@ headers_query = {
 
 
 def init():
+
+    graphdb_run()
+
     # Delete repository if it already exists
     delete_url = f"{GDB_URL}/repositories/{REPO_ID}"
     requests.delete(delete_url, timeout=60)

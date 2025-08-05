@@ -15,6 +15,7 @@
 from pathlib import Path
 
 import requests
+from bench.blazegraph_run import blazegraph_run
 from bench.skeleton import bench_report, benchmark
 
 # configuration
@@ -33,6 +34,9 @@ headers_admin = {"Content-Type": "text/plain"}
 
 
 def init():
+
+    blazegraph_run()
+
     try:
         res = requests.get(namespace_admin_url, timeout=60)
     except requests.RequestException as err:
