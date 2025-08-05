@@ -13,6 +13,8 @@
 # Copyright (C) 2025 Maira Papadopoulou
 # SPDX-License-Identifier: Apache-2.0
 
+import subprocess
+import time
 from pathlib import Path
 
 import requests
@@ -44,6 +46,16 @@ AUTH = None  # e.g. ("admin", "password")
 def init():
     try:
         res = requests.get(admin_url, auth=AUTH, timeout=60)
+    except requests.RequestException:
+        start_script = Path(__file__).parent / "jena_run.bat"
+        if not start_script.exists():
+            msg = f"Apache Jena Fuseki start script not found: {start_script}"
+            raise RuntimeError(msg)
+        subprocess.Popen(f'start "" cmd /c "{start_script}"', shell=True)
+        time.sleep(5)
+
+    try:
+        res = requests.get(admin_url, auth=AUTH, timeout=10)
     except requests.RequestException as err:
         msg = f"Could not connect to Fuseki admin endpoint: {err}"
         raise RuntimeError(msg) from err
@@ -98,16 +110,31 @@ def query(query, base):
 
 
 if __name__ == "__main__":
+    import platform
+    import subprocess
     import sys
-
-    import bench.skeleton
+    from pathlib import Path
 
     if len(sys.argv) != 2:
         print("Usage: python jena.py <turtle_file>")
         sys.exit(1)
 
-    turtle_file = sys.argv[1]
-    bench.skeleton.ttlname = turtle_file
+    if platform.system() != "Windows":
+        print("This script is configured for Windows only.")
+        sys.exit(1)
 
-    benc_res = benchmark("Apache Jena Fuseki", init, load, query)
-    bench_report("Apache Jena Fuseki", *benc_res)
+    start_script = Path(__file__).parent / "jena_run.bat"
+
+    if not start_script.exists():
+        print(f"Fuseki start script not found: {start_script}")
+        sys.exit(1)
+
+    server_proc = subprocess.Popen(f'start "" cmd /c "{start_script}"', shell=True)
+
+    try:
+        from bench import skeleton
+        skeleton.ttlname = sys.argv[1]
+        benc_res = benchmark("Apache Jena Fuseki", init, load, query)
+        bench_report("Apache Jena Fuseki", *benc_res)
+    finally:
+        server_proc.terminate()
