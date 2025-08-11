@@ -9,6 +9,7 @@ and use a local GraphDB instance with REST API access.
 """
 
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -40,7 +41,7 @@ pytestmark = pytest.mark.skipif(
 
 config = {
     "base_url": detect_graphdb_url(),
-    "repository": "testing-repo",
+    "repository": f"testns-{int(time.time())}",
     "auth": None,
     "graph": "http://example.org/test"
 }

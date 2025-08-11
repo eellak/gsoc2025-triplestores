@@ -8,11 +8,13 @@ All operations are scoped within the named graph 'http://example.org/test',
 and use a local AllegroGraph instance with SPARQL HTTP API access.
 """
 
-import getpass
+import os
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
+import requests
 from triplestore import TriplestoreFactory
 
 from network_utils import init_allegrograph_repo
@@ -24,9 +26,10 @@ OBJECT = "http://example.org/o"
 SPARQL_QUERY = "SELECT ?s ?p ?o WHERE { GRAPH <http://example.org/test> { ?s ?p ?o } }"
 
 # Repository configuration
-REPO_NAME = "test-repo"
-USERNAME = input("Enter AllegroGraph username: ")
-PASSWORD = getpass.getpass("Enter AllegroGraph password: ")
+REPO_NAME = f"testns-{int(time.time())}"
+USERNAME = os.getenv("AG_USERNAME", "testuser")
+PASSWORD = os.getenv("AG_PASSWORD", "testpass")
+
 
 # Connection configuration
 config = {
@@ -35,6 +38,21 @@ config = {
     "auth": (USERNAME, PASSWORD),
     "graph": "http://example.org/test"
 }
+
+
+def is_allegrograph_available():
+    try:
+        url = config["base_url"]
+        response = requests.get(url, timeout=2)
+        return response.status_code in {200, 401, 403}
+    except requests.RequestException:
+        return False
+
+
+pytestmark = pytest.mark.skipif(
+    not is_allegrograph_available(),
+    reason=f"AllegroGraph instance is not reachable at {config['base_url']}"
+)
 
 
 @pytest.fixture(scope="module", autouse=True)
