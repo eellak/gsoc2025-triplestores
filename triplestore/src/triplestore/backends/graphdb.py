@@ -70,8 +70,11 @@ class GraphDB(TriplestoreBackend):
             raise FileNotFoundError(msg)
 
         rdf_data = Path(filename).read_bytes()
-        url = f"{self.update_url}?context=<{self.graph_uri}>"
-        response = requests.post(url, headers=self.headers_load, data=rdf_data, auth=self.auth, timeout=60)
+        url = self.update_url
+        params = {}
+        if self.graph_uri:
+            params["context"] = f"<{self.graph_uri}>"
+        response = requests.post(url, headers=self.headers_load, params=params, data=rdf_data, auth=self.auth, timeout=60)
 
         if response.status_code not in {200, 204, 201}:
             msg = f"[GraphDB] Load failed with status {response.status_code}:\n{response.text}"

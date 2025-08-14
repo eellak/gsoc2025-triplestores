@@ -39,6 +39,8 @@ class Jena(TriplestoreBackend):
         self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_load = {"Content-Type": "text/turtle"}
 
+        self._ensure_dataset_exists()
+
     def load(self, filename: str) -> None:
         """
         Load RDF triples from a Turtle (.ttl) file into the Jena dataset.
@@ -54,7 +56,7 @@ class Jena(TriplestoreBackend):
             If the server returns an error status during data loading.
         """
         if not Path(filename).exists():
-            msg = "[APACHE JENA] File not found: {filename}"
+            msg = f"[APACHE JENA] File not found: {filename}"
             raise FileNotFoundError(msg)
 
         rdf_data = Path(filename).read_bytes()
@@ -158,4 +160,53 @@ class Jena(TriplestoreBackend):
 
         if response.status_code not in {200, 204}:
             msg = f"[APACHE JENA] Update failed with status {response.status_code}:\n{response.text}"
+            raise RuntimeError(msg)
+
+    def _ensure_dataset_exists(self) -> None:
+        """
+        Ensure that the configured dataset exists in Apache Jena Fuseki.
+        If it does not, attempt to create it using the Admin REST API.
+
+        Raises:
+        RuntimeError
+            If unable to connect to the server or if dataset creation fails.
+        """
+        admin_url = f"{self.base_url}/$/datasets"
+
+        try:
+            response = requests.get(admin_url, auth=self.auth, timeout=60)
+            if response.status_code not in {200, 401, 403}:
+                msg = f"[APACHE JENA] Admin responded with unexpected status: {response.status_code}\n{response.text}"
+                raise RuntimeError(msg)
+        except requests.RequestException as e:
+            msg = f"[APACHE JENA] Could not connect to Fuseki admin at {admin_url}: {e}"
+            raise RuntimeError(msg) from e
+
+        try:
+            datasets = response.json().get("datasets", [])
+        except ValueError:
+            datasets = []
+
+        existing_names = [ds.get("ds.name", "").lstrip("/") for ds in datasets]
+        if self.dataset in existing_names:
+            return
+
+        db_type = "tdb2"
+        db_path = getattr(self, "db_path", None)
+
+        data = {"dbName": self.dataset, "dbType": db_type}
+        if db_path:
+            data["dbPath"] = db_path
+
+        try:
+            response = requests.post(admin_url, data=data, auth=self.auth, timeout=60)
+        except requests.RequestException as err:
+            msg = f"[APACHE JENA] Could not create dataset '{self.dataset}': {err}"
+            raise RuntimeError(msg) from err
+
+        if response.status_code != 200:
+            if response.status_code in {401, 403}:
+                msg = f"[APACHE JENA] Permission denied creating dataset '{self.dataset}'.\nAdmin credentials required.\nResponse: {response.text}"
+                raise RuntimeError(msg)
+            msg = f"[APACHE JENA] Failed to create dataset '{self.dataset}': {response.status_code}\n{response.text}"
             raise RuntimeError(msg)

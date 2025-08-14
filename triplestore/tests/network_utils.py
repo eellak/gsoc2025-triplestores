@@ -32,8 +32,8 @@ def detect_graphdb_url() -> str:
     return detect_host_url(7200)
 
 
-def detect_blazegraph_url() -> str:
-    return detect_host_url(9999, "/blazegraph")
+# def detect_blazegraph_url() -> str:
+#     return detect_host_url(9999, "/blazegraph")
 
 
 def init_allegrograph_repo(repo_name: str):

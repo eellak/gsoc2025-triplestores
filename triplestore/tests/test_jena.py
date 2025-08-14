@@ -9,6 +9,7 @@ and use a local Jena Fuseki instance with REST API access.
 """
 
 import tempfile
+import time
 from pathlib import Path
 
 import pytest
@@ -37,7 +38,7 @@ pytestmark = pytest.mark.skipif(
 
 config = {
     "base_url": "http://localhost:3030",
-    "dataset": "benchmark_dataset",
+    "dataset": f"testns-{int(time.time())}",
     "auth": None,
     "graph": "http://example.org/test"
 }
