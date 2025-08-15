@@ -5,7 +5,6 @@ from .allegrograph import AllegroGraph
 from .blazegraph import Blazegraph
 from .graphdb import GraphDB
 from .jena import Jena
-from .millenniumdb import MillenniumDB
 from .oxigraph import Oxigraph
 
-__all__ = ["AllegroGraph", "Blazegraph", "GraphDB", "Jena", "MillenniumDB","Oxigraph"]
+__all__ = ["AllegroGraph", "Blazegraph", "GraphDB", "Jena", "Oxigraph"]

@@ -2,11 +2,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
+import gzip
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Any
 
 import requests
 
+from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, stop_fuseki_server
 from triplestore.base import TriplestoreBackend
 
 
@@ -30,14 +34,21 @@ class Jena(TriplestoreBackend):
         super().__init__(config)
         self.base_url = config.get("base_url", "http://localhost:3030")
         self.dataset = config.get("dataset", "test_dataset")
+        create_config_and_run_fuseki(self.dataset)
         self.auth = config.get("auth")
         self.graph_uri = config.get("graph")
+        if self.graph_uri:
+            self._effective_graph = self.graph_uri
+        else:
+            self._effective_graph = "urn:app:default"
 
         self.load_url = f"{self.base_url}/{self.dataset}/data"
         self.query_url = f"{self.base_url}/{self.dataset}/query"
+        self.update_url = f"{self.base_url}/{self.dataset}/update"
 
-        self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_load = {"Content-Type": "text/turtle"}
+        self.headers_query = {"Accept": "application/sparql-results+json"}
+        self.headers_update = {"Content-Type": "application/sparql-update"}
 
         self._ensure_dataset_exists()
 
@@ -55,20 +66,37 @@ class Jena(TriplestoreBackend):
         RuntimeError
             If the server returns an error status during data loading.
         """
-        if not Path(filename).exists():
+        path = Path(filename)
+        if not path.exists():
             msg = f"[APACHE JENA] File not found: {filename}"
             raise FileNotFoundError(msg)
 
-        rdf_data = Path(filename).read_bytes()
-        url = self.load_url
-        if self.graph_uri:
-            url += f"?graph={self.graph_uri}"
+        params = {"graph": self._effective_graph}
 
-        response = requests.post(url, headers=self.headers_load, data=rdf_data, auth=self.auth, timeout=60)
+        tmp_gz = tempfile.NamedTemporaryFile(prefix="ttl-", suffix=".ttl.gz", delete=False)
+        tmp_gz_path = Path(tmp_gz.name)
+        try:
+            with path.open("rb") as fin, gzip.open(tmp_gz, "wb", compresslevel=9) as fout:
+                shutil.copyfileobj(fin, fout)
+            tmp_gz.close()
 
-        if response.status_code not in {200, 201, 204}:
-            msg = f"[APACHE JENA] Import failed with status {response.status_code}:\n{response.text}"
-            raise RuntimeError(msg)
+            headers = {
+                "Content-Type": "text/turtle",
+                "Content-Encoding": "gzip",
+                "Connection": "keep-alive",
+            }
+            with tmp_gz_path.open("rb") as fz:
+                response = requests.post(self.load_url, params=params, data=fz, headers=headers,
+                                         auth=self.auth, timeout=(60, None))
+
+            if response.status_code not in {200, 201, 204}:
+                msg = f"[APACHE JENA] Import failed with status {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+        finally:
+            try:
+                tmp_gz_path.unlink(missing_ok=True)
+            except Exception:
+                pass
 
     def add(self, s: str, p: str, o: str) -> None:
         """
@@ -78,9 +106,7 @@ class Jena(TriplestoreBackend):
         """
         triple = f"<{s}> <{p}> <{o}> ."
         sparql = (
-            f"INSERT DATA {{ GRAPH <{self.graph_uri}> {{ {triple} }} }}"
-            if self.graph_uri else
-            f"INSERT DATA {{ {triple} }}"
+            f"INSERT DATA {{ GRAPH <{self._effective_graph}> {{ {triple} }} }}"
         )
         self._run_update(sparql)
 
@@ -92,9 +118,7 @@ class Jena(TriplestoreBackend):
         """
         triple = f"<{s}> <{p}> <{o}> ."
         sparql = (
-            f"DELETE DATA {{ GRAPH <{self.graph_uri}> {{ {triple} }} }}"
-            if self.graph_uri else
-            f"DELETE DATA {{ {triple} }}"
+            f"DELETE DATA {{ GRAPH <{self._effective_graph}> {{ {triple} }} }}"
         )
         self._run_update(sparql)
 
@@ -114,7 +138,13 @@ class Jena(TriplestoreBackend):
         RuntimeError
             If the query fails or the server returns an error response.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=60)
+        final_query = (
+            add_graph_clause_if_needed(sparql, self._effective_graph)
+            if getattr(self, "_effective_graph", None) == "urn:app:default"
+            else sparql
+        )
+
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=None)
 
         if response.status_code != 200:
             msg = f"[APACHE JENA] Query failed with status {response.status_code}:\n{response.text}"
@@ -134,10 +164,7 @@ class Jena(TriplestoreBackend):
         If a named graph is specified, it is dropped silently (no error if it doesn't exist).
         Otherwise, the default graph is cleared.
         """
-        if self.graph_uri:
-            sparql = f"DROP SILENT GRAPH <{self.graph_uri}>"
-        else:
-            sparql = "CLEAR DEFAULT"
+        sparql = f"DROP SILENT GRAPH <{self._effective_graph}>"
 
         self._run_update(sparql)
 
@@ -153,10 +180,7 @@ class Jena(TriplestoreBackend):
         RuntimeError
             If the update operation fails with a non-success status code.
         """
-        update_url = f"{self.base_url}/{self.dataset}/update"
-        headers = {"Content-Type": "application/sparql-update"}
-
-        response = requests.post(update_url, headers=headers, data=sparql, auth=self.auth, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
 
         if response.status_code not in {200, 204}:
             msg = f"[APACHE JENA] Update failed with status {response.status_code}:\n{response.text}"
@@ -210,3 +234,6 @@ class Jena(TriplestoreBackend):
                 raise RuntimeError(msg)
             msg = f"[APACHE JENA] Failed to create dataset '{self.dataset}': {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
+
+    def stop_server(self) -> bool:
+        return stop_fuseki_server()

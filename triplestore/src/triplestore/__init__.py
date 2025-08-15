@@ -8,7 +8,6 @@ from .backends.allegrograph import AllegroGraph
 from .backends.blazegraph import Blazegraph
 from .backends.graphdb import GraphDB
 from .backends.jena import Jena
-from .backends.millenniumdb import MillenniumDB
 from .backends.oxigraph import Oxigraph
 from .base import TriplestoreBackend
 
@@ -23,7 +22,6 @@ _BACKENDS: dict[str, type[TriplestoreBackend]] = {
     "graphdb": GraphDB,
     "blazegraph": Blazegraph,
     "allegrograph": AllegroGraph,
-    "millenniumdb": MillenniumDB,
 }
 
 

@@ -9,9 +9,10 @@ authors = [
 ]
 requires-python = ">=3.10"
 dependencies = [
-    "requests",
-    "pyoxigraph",
-    "rdflib",
+    "psutil>=7.0.0",
+    "pyoxigraph>=0.4.11",
+    "rdflib>=7.1.4",
+    "requests>=2.32.4",
 ]
 
 [build-system]
