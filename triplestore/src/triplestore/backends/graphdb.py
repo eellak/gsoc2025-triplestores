@@ -70,11 +70,10 @@ class GraphDB(TriplestoreBackend):
             raise FileNotFoundError(msg)
 
         rdf_data = Path(filename).read_bytes()
-        url = self.update_url
         params = {}
         if self.graph_uri:
             params["context"] = f"<{self.graph_uri}>"
-        response = requests.post(url, headers=self.headers_load, params=params, data=rdf_data, auth=self.auth, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_load, params=params, data=rdf_data, auth=self.auth, timeout=None)
 
         if response.status_code not in {200, 204, 201}:
             msg = f"[GraphDB] Load failed with status {response.status_code}:\n{response.text}"
@@ -136,9 +135,7 @@ class GraphDB(TriplestoreBackend):
         RuntimeError
             If the query fails or the server returns an error response.
         """
-        # if self.graph_uri:
-        #     sparql = f"SELECT ?s ?p ?o WHERE {{ GRAPH <{self.graph_uri}> {{ ?s ?p ?o }} }}"
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=60)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
 
         if response.status_code != 200:
             msg = f"[GraphDB] SPARQL query failed: {response.status_code}\n{response.text}"
@@ -152,7 +149,10 @@ class GraphDB(TriplestoreBackend):
         """
         Remove all data from the GraphDB repository (default and named graphs).
         """
-        sparql = "CLEAR ALL"
+        if getattr(self, "graph_uri", None):
+            sparql = f"CLEAR GRAPH <{self.graph_uri}>"
+        else:
+            sparql = "CLEAR DEFAULT"
         self._run_update(sparql)
 
     def _run_update(self, sparql: str) -> None:
@@ -167,7 +167,7 @@ class GraphDB(TriplestoreBackend):
         RuntimeError
             If the update operation fails with a non-success status code.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
         if response.status_code not in {200, 204, 201}:
             msg = f"[GraphDB] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
@@ -184,16 +184,29 @@ class GraphDB(TriplestoreBackend):
         check_url = f"{self.base_url}/repositories/{self.repository}"
 
         try:
-            response = requests.get(check_url, timeout=60, auth=self.auth)
-            if response.status_code == 200 or response.status_code in {401, 403}:
+            response = requests.get(check_url, timeout=300, auth=self.auth)
+            if response.status_code == 200:
                 return
+            if response.status_code in {401, 403}:
+                logger.warning(
+                    "[GraphDB] Access denied when checking repository '%s' at %s "
+                    "(HTTP %s). The repository may exist but you don't have permission "
+                    "to access it. If you're using GraphDB Desktop, REST admin ops may "
+                    "be disabled. Consider creating the repository from the UI or using "
+                    "server mode with admin REST enabled.",
+                    self.repository, check_url, response.status_code,
+                )
+                msg = (f"[GraphDB] Access denied while checking repository '{self.repository}' "
+                      f"(HTTP {response.status_code}). The repository may exist but is not "
+                      f"accessible with the provided credentials/instance settings.")
+                raise RuntimeError(msg)
         except requests.RequestException as e:
             msg = f"[GraphDB] Could not connect to GraphDB at {check_url}: {e}"
             raise RuntimeError(msg) from e
 
         try:
             delete_url = f"{self.base_url}/repositories/{self.repository}"
-            requests.delete(delete_url, timeout=60, auth=self.auth)
+            requests.delete(delete_url, timeout=300, auth=self.auth)
         except requests.RequestException as err:
             msg = f"[GraphDB] Failed to delete repo {self.repository} silently: {err}"
             logger.debug(msg)
@@ -231,7 +244,15 @@ class GraphDB(TriplestoreBackend):
         resp = requests.post(create_url, files=files, timeout=60, auth=self.auth)
 
         if resp.status_code in {200, 201}:
-            return
+            try:
+                verify_url = f"{self.base_url}/rest/repositories/{self.repository}"
+                verify = requests.get(verify_url, timeout=60, auth=self.auth)
+            except requests.RequestException as e:
+                msg = f"[GraphDB] Repository '{self.repository}' created, but verification GET failed: {e}"
+                raise RuntimeError(msg) from e
+            if verify.status_code in {200, 201}:
+                return
+
         if resp.status_code == 403:
             msg = (
                 f"[GraphDB] Cannot create repository '{self.repository}' — permission denied (403).\n"
@@ -242,6 +263,7 @@ class GraphDB(TriplestoreBackend):
                 f"Response: {resp.text}"
             )
             raise RuntimeError(msg)
+
         msg = (
             f"[GraphDB] Failed to create repo '{self.repository}': "
             f"{resp.status_code} {resp.text}"
