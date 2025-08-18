@@ -12,7 +12,6 @@ import tempfile
 import time
 from pathlib import Path
 
-import pytest
 import requests
 from triplestore import TriplestoreFactory
 
@@ -21,20 +20,6 @@ PREDICATE = "http://example.org/p"
 OBJECT = "http://example.org/o"
 SPARQL_QUERY = "SELECT ?s ?p ?o WHERE { GRAPH <http://example.org/test> { ?s ?p ?o } }"
 
-
-def is_jena_available():
-    try:
-        url = "http://localhost:3030/$/ping"
-        response = requests.get(url, timeout=2)
-        return response.status_code == 200
-    except requests.RequestException:
-        return False
-
-
-pytestmark = pytest.mark.skipif(
-    not is_jena_available(),
-    reason="Jena Fuseki is not reachable at http://localhost:3030"
-)
 
 config = {
     "base_url": "http://localhost:3030",
@@ -177,3 +162,19 @@ def test_clear_twice_is_safe():
     results = store.query(SPARQL_QUERY)
 
     assert len(results) == 0
+
+
+def test_stop_server():
+    """Test that stop_server() terminates a running Fuseki instance."""
+    store = TriplestoreFactory("jena", config=config)
+    store.clear()
+
+    result = store.stop_server()
+
+    assert result is True
+
+    try:
+        r = requests.get(f"{config['base_url']}/$/ping", timeout=2)
+        assert r.status_code != 200
+    except requests.RequestException:
+        pass
