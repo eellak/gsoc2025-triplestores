@@ -239,3 +239,15 @@ def add_graph_clause_if_needed(q: str, graph: str) -> str:
                 + " }"
                 + q[close_idx:]
             )
+
+
+def first_keyword(q: str) -> str:
+    q = re.sub(r"(^|\n)\s*#.*", "", q)
+
+    q = re.sub(r"^\s*(BASE|PREFIX)\b[^\n]*\n", "", q, flags=re.IGNORECASE | re.MULTILINE)
+
+    m = re.search(
+        r"\b(SELECT|ASK|CONSTRUCT|DESCRIBE|WITH|INSERT|DELETE|LOAD|CLEAR|CREATE|DROP|MOVE|COPY|ADD|MODIFY)\b",
+        q, flags=re.IGNORECASE
+    )
+    return m.group(1).upper() if m else ""
