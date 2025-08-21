@@ -8,7 +8,6 @@ All operations are scoped within the named graph 'http://example.org/test',
 and use a local AllegroGraph instance with SPARQL HTTP API access.
 """
 
-import os
 import tempfile
 import time
 from pathlib import Path
@@ -27,15 +26,12 @@ SPARQL_QUERY = "SELECT ?s ?p ?o WHERE { GRAPH <http://example.org/test> { ?s ?p 
 
 # Repository configuration
 REPO_NAME = f"testns-{int(time.time())}"
-USERNAME = os.getenv("AG_USERNAME", "testuser")
-PASSWORD = os.getenv("AG_PASSWORD", "testpass")
 
 
 # Connection configuration
 config = {
     "base_url": "http://localhost:10035",
     "repository": REPO_NAME,
-    "auth": (USERNAME, PASSWORD),
     "graph": "http://example.org/test"
 }
 
@@ -155,3 +151,69 @@ def test_clear_twice_is_safe():
     store.clear()
     results = store.query(SPARQL_QUERY)
     assert len(results) == 0
+
+
+def test_execute():
+    """End-to-end test for execute(): INSERT/DELETE/CLEAR + ASK/SELECT/DESCRIBE/CONSTRUCT."""
+    store = TriplestoreFactory("allegrograph", config=config)
+    store.clear()
+
+    graph = config["graph"]
+
+    # INSERT DATA
+    insert_q = f"INSERT DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    out = store.execute(insert_q)
+    assert out is None
+
+    # ASK
+    ask_q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    ask_res = store.execute(ask_q)
+    assert isinstance(ask_res, bool) and ask_res is True
+
+    # SELECT
+    select_q = f"""
+        SELECT ?s WHERE {{
+            GRAPH <{graph}> {{
+                ?s <{PREDICATE}> <{OBJECT}>
+            }}
+        }}
+    """
+    sel = store.execute(select_q)
+    assert isinstance(sel, list) and len(sel) == 1
+    subjects = [str(r["s"]).strip("<>") for r in sel]
+    assert SUBJECT in subjects
+
+    # DESCRIBE
+    describe_q = f"DESCRIBE <{SUBJECT}>"
+    desc = store.execute(describe_q)
+    assert isinstance(desc, str)
+    assert SUBJECT in desc
+
+    # CONSTRUCT
+    construct_q = f"""
+        CONSTRUCT {{ ?s ?p ?o }}
+        WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}
+    """
+    cons = store.execute(construct_q)
+    assert isinstance(cons, str)
+    assert SUBJECT in cons and PREDICATE in cons and OBJECT in cons
+
+    # DELETE DATA
+    delete_q = f"DELETE DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    del_out = store.execute(delete_q)
+    assert del_out is None
+    assert store.execute(ask_q) is False
+
+    # Re-insert duplicates and CLEAR GRAPH
+    store.execute(f"""
+        INSERT DATA {{
+            GRAPH <{graph}> {{
+                <{SUBJECT}> <{PREDICATE}> <{OBJECT}> .
+                <{SUBJECT}> <{PREDICATE}> <{OBJECT}> .
+            }}
+        }}
+    """)
+    clear_q = f"CLEAR GRAPH <{graph}>"
+    clr_out = store.execute(clear_q)
+    assert clr_out is None
+    assert store.execute(f"ASK WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}") is False

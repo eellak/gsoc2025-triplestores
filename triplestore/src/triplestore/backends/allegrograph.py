@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
 import requests
-from rdflib import Graph
 
 from triplestore.base import TriplestoreBackend
 
@@ -22,62 +22,101 @@ class AllegroGraph(TriplestoreBackend):
         """
         Initialize the AllegroGraph backend with the given configuration.
 
-        Parameters:
+         Parameters
+        ----------
         config : dict
-            A configuration dictionary containing connection parameters:
-            - base_url (optional): Base URL of the AllegroGraph instance (default: http://localhost:10035).
-            - repository : Name of the target repository (required).
-            - auth (optional): Tuple (username, password) for HTTP Basic Auth.
-            - graph (optional): Named graph URI for scoped operations.
+            Connection settings:
+              - base_url (str, optional): Base URL of AllegroGraph (default: http://localhost:10035).
+              - repository (str, required): Target repository name.
+              - auth (tuple[str, str], optional): Basic Auth credentials (username, password).
+              - graph (str, optional): Named graph URI for scoping operations.
 
-        Raises:
+        Raises
+        ------
         ValueError
-            If the 'repository' key is missing from the configuration.
+            If 'repository' is missing or credentials are not provided via config or environment variables.
         """
 
         super().__init__(config)
-        self.base_url = config.get("base_url", "http://localhost:10035")
-        self.repository = config.get("repository")
-        self.auth = config.get("auth")
-        self.graph_uri = config.get("graph")
+        self.base_url: str = config.get("base_url", "http://localhost:10035")
+        self.repository: str | None = config.get("repository")
+        self.graph_uri: str | None = config.get("graph")
 
         if not self.repository:
             msg = "[AllegroGraph] Missing required 'repository' in config."
             raise ValueError(msg)
 
+        auth_cfg = config.get("auth")
+        username: str | None = None
+        password: str | None = None
+
+        if auth_cfg is not None:
+            try:
+                username, password = auth_cfg
+            except Exception as e:
+                msg = ("[AllegroGraph] Invalid value for 'auth' in config. "
+                    "Expected a tuple of the form (username, password).\n"
+                    'Example: auth=("username", "password")'
+                )
+                raise ValueError(msg) from e
+
+        if not username or not password:
+            # Fallback to environment variables
+            env_user = os.getenv("AG_USERNAME")
+            env_pass = os.getenv("AG_PASSWORD")
+            if env_user and env_pass:
+                username, password = env_user, env_pass
+
+        if not username or not password:
+            msg = (
+                "[AllegroGraph] No credentials found. "
+                "Please provide login details either:\n"
+                "  • in the config: auth=(username, password)\n"
+                "  • or via environment variables: AG_USERNAME / AG_PASSWORD\n"
+                "Without valid credentials, the connection to AllegroGraph cannot be established."
+            )
+            raise ValueError(msg)
+        self.auth = (username, password)
+
         self.query_url = f"{self.base_url}/repositories/{self.repository}"
-        self.update_url = self.query_url
+        self.update_url = f"{self.base_url}/repositories/{self.repository}/statements"
+        self.load_url = f"{self.base_url}/repositories/{self.repository}/statements"
+
         self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_update = {"Content-Type": "application/x-www-form-urlencoded"}
         self.headers_load = {"Content-Type": "text/turtle"}
 
     def load(self, filename: str) -> None:
         """
-        Load RDF triples from a Turtle (.ttl) file into the AllegroGraph repository.
-        This implementation parses the file and serializes it to N-Triples before loading.
+        Load RDF data into the repository using the Graph Store Protocol.
 
-        Parameters:
+        Parameters
+        ----------
         filename : str
-            Path to the Turtle (.ttl) file to be loaded.
+            Path to the RDF file to load (e.g. Turtle).
 
-        Raises:
+        Raises
+        ------
+        FileNotFoundError
+            If the file does not exist.
         RuntimeError
-            If the server returns an error status during data loading.
+            If the server responds with a non-success status code.
         """
-        if not Path(filename).exists():
+        path = Path(filename)
+        if not path.exists():
             msg = f"[AllegroGraph] File not found: {filename}"
             raise FileNotFoundError(msg)
 
-        g = Graph()
-        g.parse(filename, format="turtle")
-        triples = g.serialize(format="nt").strip()
+        params: dict[str, str] = {}
+        if self.graph_uri:
+            params["context"] = f"<{self.graph_uri}>"
 
-        sparql = (
-            f"INSERT DATA {{ GRAPH <{self.graph_uri}> {{ {triples} }} }}"
-            if self.graph_uri else
-            f"INSERT DATA {{ {triples} }}"
-        )
-        self._run_update(sparql)
+        with path.open("rb") as f:
+            response = requests.post(self.load_url, params=params, data=f, headers=self.headers_load, auth=self.auth, timeout=None)
+
+        if response.status_code not in {200, 201, 204}:
+            msg = f"[AllegroGraph] GSP load failed with status {response.status_code}:\n{response.text}"
+            raise RuntimeError(msg)
 
     def add(self, s: str, p: str, o: str) -> None:
         """
@@ -121,7 +160,7 @@ class AllegroGraph(TriplestoreBackend):
 
     def query(self, sparql: str) -> list[dict[str, str]]:
         """
-        Execute a SPARQL query against the AllegroGraph repository.
+        Run a SPARQL SELECT query against the AllegroGraph repository.
 
         Parameters:
         sparql : str
@@ -135,7 +174,7 @@ class AllegroGraph(TriplestoreBackend):
         RuntimeError
             If the query fails or the server returns an error response.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=60)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
 
         if response.status_code != 200:
             msg = f"[AllegroGraph] SPARQL query failed: {response.status_code}\n{response.text}"
@@ -144,6 +183,65 @@ class AllegroGraph(TriplestoreBackend):
         data = response.json()
         bindings = data.get("results", {}).get("bindings", [])
         return [{k: v["value"] for k, v in row.items()} for row in bindings]
+
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL query (SELECT, ASK, CONSTRUCT, DESCRIBE, UPDATE).
+
+        Parameters
+        ----------
+        sparql : str
+            The SPARQL query or update string.
+
+        Returns
+        -------
+        Any
+            - list of dict for SELECT
+            - bool for ASK
+            - str (Turtle RDF) for CONSTRUCT/DESCRIBE
+            - None for UPDATE operations
+
+        Raises
+        ------
+        RuntimeError
+            If the server responds with an error status.
+        """
+        qstrip = sparql.lstrip()
+        query_type = qstrip.split(None, 1)[0].upper() if qstrip else ""
+        if not query_type:
+            msg = "[AllegroGraph] Could not detect SPARQL keyword."
+            raise RuntimeError(msg)
+
+        # SELECT / ASK
+        if query_type in {"SELECT", "ASK"}:
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+
+            if response.status_code != 200:
+                raise RuntimeError(f"[AllegroGraph] Query failed {response.status_code}:\n{response.text}")
+
+            data = response.json()
+            if query_type == "ASK":
+                return bool(data.get("boolean", False))
+            bindings = data.get("results", {}).get("bindings", [])
+            return [{k: v["value"] for k, v in row.items()} for row in bindings]
+
+        # CONSTRUCT / DESCRIBE
+        if query_type in {"CONSTRUCT", "DESCRIBE"}:
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=None)
+
+            if response.status_code != 200:
+                msg = f"[AllegroGraph] Graph query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            return response.text
+
+        # UPDATE
+        if query_type in {"WITH", "INSERT", "DELETE", "LOAD", "CLEAR", "CREATE", "DROP",
+                "MOVE", "COPY", "ADD", "MODIFY"}:
+            self._run_update(sparql)
+            return None
+
+        msg = f"[AllegroGraph] Unsupported SPARQL keyword: {query_type}"
+        raise RuntimeError(msg)
 
     def clear(self) -> None:
         """
@@ -159,17 +257,17 @@ class AllegroGraph(TriplestoreBackend):
 
     def _run_update(self, sparql: str) -> None:
         """
-        Execute a SPARQL update operation.
+        Clear all triples from the repository.
 
-        Parameters:
-        sparql : str
-            The SPARQL update string to be sent to the server.
+        If a named graph is configured, it executes ``CLEAR GRAPH <graph>``.
+        Otherwise, it deletes all triples from the default graph.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
-            If the update operation fails with a non-success status code.
+            If the update request fails.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data={"update": sparql}, auth=self.auth, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_update, data={"update": sparql}, auth=self.auth, timeout=None)
         if response.status_code not in {200, 204, 201}:
             msg = f"[AllegroGraph] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
