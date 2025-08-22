@@ -164,6 +164,73 @@ def test_clear_twice_is_safe():
     assert len(results) == 0
 
 
+def test_execute():
+    """End-to-end test for execute(): INSERT/DELETE/CLEAR + ASK/SELECT/DESCRIBE/CONSTRUCT."""
+    store = TriplestoreFactory("jena", config=config)
+    store.clear()
+
+    graph = config["graph"]
+
+    # --- INSERT DATA (UPDATE)
+    insert_q = f"INSERT DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    out = store.execute(insert_q)
+    assert out is None  # updates should return None
+
+    # --- ASK (boolean)
+    ask_q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    ask_res = store.execute(ask_q)
+    assert isinstance(ask_res, bool) and ask_res is True
+
+    # --- SELECT (bindings -> list[dict])
+    select_q = f"""
+        SELECT ?s WHERE {{
+            GRAPH <{graph}> {{
+                ?s <{PREDICATE}> <{OBJECT}>
+            }}
+        }}
+    """
+    sel = store.execute(select_q)
+    assert isinstance(sel, list) and len(sel) == 1
+    subjects = [str(r["s"]).strip("<>") for r in sel]
+    assert SUBJECT in subjects
+
+    # --- DESCRIBE (RDF text)
+    describe_q = f"DESCRIBE <{SUBJECT}>"
+    desc = store.execute(describe_q)
+    assert isinstance(desc, str)
+    # At least verify URIs appear in the serialization
+    assert SUBJECT in desc
+
+    # --- CONSTRUCT (RDF text)
+    construct_q = f"""
+        CONSTRUCT {{ ?s ?p ?o }}
+        WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}
+    """
+    cons = store.execute(construct_q)
+    assert isinstance(cons, str)
+    assert SUBJECT in cons and PREDICATE in cons and OBJECT in cons
+
+    # --- DELETE DATA (UPDATE) and verify removal
+    delete_q = f"DELETE DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    del_out = store.execute(delete_q)
+    assert del_out is None
+    assert store.execute(ask_q) is False
+
+    # --- Re-insert and CLEAR GRAPH (UPDATE)
+    store.execute(f"""
+        INSERT DATA {{
+            GRAPH <{graph}> {{
+                <{SUBJECT}> <{PREDICATE}> <{OBJECT}> .
+                <{SUBJECT}> <{PREDICATE}> <{OBJECT}> .
+            }}
+        }}
+    """)
+    clear_q = f"CLEAR GRAPH <{graph}>"
+    clr_out = store.execute(clear_q)
+    assert clr_out is None
+    assert store.execute(f"ASK WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}") is False
+
+
 def test_stop_server():
     """Test that stop_server() terminates a running Fuseki instance."""
     store = TriplestoreFactory("jena", config=config)
