@@ -33,8 +33,10 @@ class Blazegraph(TriplestoreBackend):
         self.base_url = config.get("base_url", "http://172.27.148.51:9999/blazegraph")
         self.namespace = config.get("namespace", "kb")
         self.graph_uri = config.get("graph")
+
         self.update_url = f"{self.base_url}/namespace/{self.namespace}/sparql"
         self.query_url = self.update_url
+
         self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_update = {"Content-Type": "application/sparql-update"}
         self.headers_load = {"Content-Type": "text/turtle"}
@@ -59,7 +61,7 @@ class Blazegraph(TriplestoreBackend):
 
         data = Path(filename).read_bytes()
         params = {"context-uri": self.graph_uri} if self.graph_uri else {}
-        response = requests.post(self.update_url, headers=self.headers_load, data=data, params=params, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_load, data=data, params=params, timeout=None)
         if response.status_code not in {200, 204, 201}:
             msg = f"[Blazegraph] Load failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
@@ -104,9 +106,60 @@ class Blazegraph(TriplestoreBackend):
         )
         self._run_update(sparql)
 
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL query (SELECT, ASK, CONSTRUCT, DESCRIBE, UPDATE).
+
+        Parameters:
+        sparql : str
+            The SPARQL query or update string.
+
+        Returns:
+        Any
+            - list of dict for SELECT
+            - bool for ASK
+            - str (RDF serialization) for CONSTRUCT/DESCRIBE
+            - None for UPDATE operations
+
+        Raises:
+        RuntimeError
+            If the server responds with an error.
+        """
+        query_type = sparql.strip().split(maxsplit=1)[0].upper()
+
+        # SELECT / ASK
+        if query_type in {"SELECT", "ASK"}:
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=None)
+            if response.status_code != 200:
+                msg = f"[Blazegraph] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+
+            data = response.json()
+            if query_type == "ASK":
+                return bool(data.get("boolean", False))
+            bindings = data.get("results", {}).get("bindings", [])
+            return [{k: v["value"] for k, v in row.items()} for row in bindings]
+
+        # CONSTRUCT / DESCRIBE → RDF (Turtle)
+        if query_type in {"CONSTRUCT", "DESCRIBE"}:
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, timeout=None)
+            if response.status_code != 200:
+                msg = f"[Blazegraph] SPARQL query failed: {response.status_code}\n{response.text}"
+                raise RuntimeError(msg)
+            return response.text
+
+        # UPDATE family
+        if query_type in {"WITH", "INSERT", "DELETE", "LOAD", "CLEAR", "CREATE", "DROP",
+                "MOVE", "COPY", "ADD", "MODIFY"}:
+            self._run_update(sparql)
+            return None
+
+        msg = f"[Blazegraph] Unsupported SPARQL keyword: {query_type}"
+        raise RuntimeError(msg)
+
     def query(self, sparql: str) -> list[dict[str, str]]:
         """
-        Execute a SPARQL query against Blazegraph.
+        Execute a SPARQL SELECT query against Blazegraph.
 
         Parameters:
         sparql : str
@@ -120,7 +173,7 @@ class Blazegraph(TriplestoreBackend):
         RuntimeError
             If the query fails or the response is invalid.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=60)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=None)
         if response.status_code != 200:
             msg = f"[Blazegraph] SPARQL query failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
@@ -152,7 +205,7 @@ class Blazegraph(TriplestoreBackend):
         RuntimeError
             If the update fails with a non-success HTTP status.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, timeout=60)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, timeout=None)
         if response.status_code not in {200, 204, 201}:
             msg = f"[Blazegraph] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)

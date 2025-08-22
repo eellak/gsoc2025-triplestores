@@ -3,9 +3,9 @@
 
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
-from pyoxigraph import DefaultGraph, NamedNode, Quad, RdfFormat, Store
+from pyoxigraph import DefaultGraph, NamedNode, Quad, QueryBoolean, QueryTriples, RdfFormat, Store
 
 from triplestore.base import TriplestoreBackend
 
@@ -21,10 +21,14 @@ class Oxigraph(TriplestoreBackend):
 
         Parameters:
         config : dict
-            A configuration dictionary. Currently unused but required for interface compatibility.
+            Expected keys (optional):
+              - "graph": str -> default named graph to use (if provided).
         """
         super().__init__(config)
         self.store = Store()
+        self.graph_uri: Optional[str] = config.get("graph")
+        if self.graph_uri:
+            self.store.add_graph(NamedNode(self.graph_uri))
 
     def load(self, filename: str) -> None:
         """
@@ -34,8 +38,16 @@ class Oxigraph(TriplestoreBackend):
         filename : str
             Path to the Turtle (.ttl) file to be loaded.
         """
+        path = Path(filename)
+        if not path.exists():
+            msg = f"[Oxigraph] File not found: {filename}"
+            raise FileNotFoundError(msg)
+
         with Path(filename).open("rb") as f:
-            self.store.bulk_load(f, RdfFormat.TURTLE)
+            if self.graph_uri:
+                self.store.bulk_load(f, RdfFormat.TURTLE, to_graph=NamedNode(self.graph_uri))
+            else:
+                self.store.bulk_load(f, RdfFormat.TURTLE, to_graph=DefaultGraph())
         self.store.optimize()
 
     def add(self, subject: str, predicate: str, obj: str) -> None:
@@ -50,7 +62,8 @@ class Oxigraph(TriplestoreBackend):
         obj : str
             The object URI of the triple.
         """
-        quad = Quad(NamedNode(subject), NamedNode(predicate), NamedNode(obj), DefaultGraph())
+        gterm = NamedNode(self.graph_uri) if self.graph_uri else DefaultGraph()
+        quad = Quad(NamedNode(subject), NamedNode(predicate), NamedNode(obj), gterm)
         self.store.add(quad)
 
     def delete(self, subject: str, predicate: str, obj: str) -> None:
@@ -65,25 +78,92 @@ class Oxigraph(TriplestoreBackend):
         obj : str
             The object URI of the triple to remove.
         """
-        quad = Quad(NamedNode(subject), NamedNode(predicate), NamedNode(obj), DefaultGraph())
+        gterm = NamedNode(self.graph_uri) if self.graph_uri else DefaultGraph()
+        quad = Quad(NamedNode(subject), NamedNode(predicate), NamedNode(obj), gterm)
         self.store.remove(quad)
 
     def query(self, sparql: str) -> Any:
         """
-        Execute a SPARQL query against the Oxigraph store.
+        Execute a SPARQL query (SELECT / ASK / CONSTRUCT / DESCRIBE).
 
-        Parameters:
+        Parameters
+        ----------
         sparql : str
-            The SPARQL query string.
+            A valid SPARQL query string.
 
-        Returns:
+        Returns
+        -------
+        bool
+            If the query is an ASK, returns True or False.
+        str
+            If the query is a CONSTRUCT or DESCRIBE, returns an RDF graph
+            serialized in Turtle format.
+        list
+            If the query is a SELECT, returns a list of bindings (dictionaries).
         Any
-            The list of results returned by the query engine.
+            Raw result object if the type cannot be determined.
         """
-        return list(self.store.query(sparql))
+        res = self.store.query(sparql)
+
+        # ASK
+        if isinstance(res, QueryBoolean):
+            return bool(res)
+
+        # CONSTRUCT / DESCRIBE
+        if isinstance(res, QueryTriples):
+            return res.serialize(format=RdfFormat.TURTLE).decode("utf-8")
+
+        # SELECT
+        try:
+            iter(res)
+        except TypeError:
+            return res
+        else:
+            return list(res)
+
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL operation.
+
+        Parameters
+        ----------
+        sparql : str
+            A valid SPARQL query or update string.
+
+        Returns
+        -------
+        None
+            For SPARQL Update operations (INSERT, DELETE, CLEAR, etc.).
+        bool
+            For ASK queries.
+        list
+            For SELECT queries, a list of solution mappings.
+        str
+            For CONSTRUCT or DESCRIBE queries, an RDF graph serialized in Turtle.
+        """
+        qstrip = sparql.lstrip()
+        head = qstrip.split(None, 1)[0].lower() if qstrip else ""
+
+        update_heads = {
+            "insert", "delete", "clear", "load", "create",
+            "drop", "with", "modify", "add", "move", "copy"
+        }
+        if head in update_heads:
+            self.store.update(sparql)
+            return None
+
+        return self.query(sparql)
 
     def clear(self) -> None:
         """
-        Remove all data from the Oxigraph store.
+        Remove all triples from the store.
+
+        Notes
+        -----
+        - If a named graph URI is configured, only that graph is cleared.
+        - Otherwise, the default graph is cleared.
         """
-        self.store.clear()
+        if self.graph_uri:
+            self.store.clear_graph(NamedNode(self.graph_uri))
+        else:
+            self.store.clear_graph(DefaultGraph())

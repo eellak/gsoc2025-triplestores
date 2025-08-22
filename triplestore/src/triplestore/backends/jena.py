@@ -10,7 +10,7 @@ from typing import Any
 
 import requests
 
-from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, stop_fuseki_server
+from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, first_keyword, stop_fuseki_server
 from triplestore.base import TriplestoreBackend
 
 
@@ -156,6 +156,66 @@ class Jena(TriplestoreBackend):
             {k: v["value"] for k, v in row.items()}
             for row in bindings
         ]
+
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL query (SELECT, ASK, CONSTRUCT, DESCRIBE, UPDATE).
+
+        Parameters:
+        sparql : str
+            The SPARQL query or update string.
+
+        Returns:
+        Any
+            - list of dict for SELECT/ASK
+            - str (raw text) or parsed JSON for CONSTRUCT/DESCRIBE
+            - None for UPDATE operations
+
+        Raises:
+        RuntimeError
+            If the server responds with an error status.
+        """
+        kw = first_keyword(sparql)
+        if not kw:
+            msg = "[APACHE JENA] Could not detect SPARQL keyword."
+            raise RuntimeError(msg)
+
+        if kw in {"SELECT", "ASK", "CONSTRUCT", "DESCRIBE"} and getattr(self, "_effective_graph", None) == "urn:app:default":
+            final_query = add_graph_clause_if_needed(sparql, self._effective_graph)
+        else:
+            final_query = sparql
+
+        # SELECT / ASK
+        if kw in {"SELECT", "ASK"}:
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=None)
+            if response.status_code != 200:
+                msg = f"[APACHE JENA] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            data = response.json()
+            if kw == "ASK":
+                return bool(data.get("boolean", False))
+
+            bindings = data.get("results", {}).get("bindings", [])
+            return [{k: v["value"] for k, v in row.items()} for row in bindings]
+
+        #  CONSTRUCT / DESCRIBE (graph queries → RDF)
+        if kw in {"CONSTRUCT", "DESCRIBE"}:
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": final_query}, auth=self.auth, timeout=None)
+            if response.status_code != 200:
+                msg = f"[APACHE JENA] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            return response.text
+
+        # UPDATE family (INSERT, DELETE, CLEAR, LOAD, CREATE, DROP, MOVE, COPY, ADD, MODIFY, WITH)
+        if kw in {"WITH", "INSERT", "DELETE", "LOAD", "CLEAR", "CREATE", "DROP", "MOVE", "COPY", "ADD", "MODIFY"}:
+            response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
+            if response.status_code not in {200, 204}:
+                msg = f"[APACHE JENA] Update failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            return None
+
+        msg = f"[APACHE JENA] Unsupported SPARQL keyword: {kw}"
+        raise RuntimeError(msg)
 
     def clear(self) -> None:
         """
