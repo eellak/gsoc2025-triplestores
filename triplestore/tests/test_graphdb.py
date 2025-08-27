@@ -15,8 +15,7 @@ from pathlib import Path
 import pytest
 import requests
 from triplestore import TriplestoreFactory
-
-from network_utils import detect_graphdb_url
+from triplestore.network_utils import detect_graphdb_url
 
 SUBJECT = "http://example.org/s"
 PREDICATE = "http://example.org/p"
@@ -40,7 +39,6 @@ pytestmark = pytest.mark.skipif(
 
 
 config = {
-    "base_url": detect_graphdb_url(),
     "repository": f"testns-{int(time.time())}",
     "auth": None,
     "graph": "http://example.org/test"
