@@ -33,7 +33,12 @@ class Jena(TriplestoreBackend):
         """
         super().__init__(config)
         self.base_url = config.get("base_url", "http://localhost:3030")
-        self.dataset = config.get("dataset", "test_dataset")
+        self.dataset = config.get("dataset")
+
+        if not self.dataset:
+            msg = "[APACHE JENA] Missing required 'dataset' in config."
+            raise ValueError(msg)
+
         create_config_and_run_fuseki(self.dataset)
         self.auth = config.get("auth")
         self.graph_uri = config.get("graph")
@@ -62,7 +67,8 @@ class Jena(TriplestoreBackend):
         filename : str
             Path to the Turtle (.ttl) file to be loaded.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the server returns an error status during data loading.
         """
@@ -134,7 +140,8 @@ class Jena(TriplestoreBackend):
         list of dict
             The list of query result bindings.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the query fails or the server returns an error response.
         """
@@ -171,7 +178,8 @@ class Jena(TriplestoreBackend):
             - str (raw text) or parsed JSON for CONSTRUCT/DESCRIBE
             - None for UPDATE operations
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the server responds with an error status.
         """
@@ -236,7 +244,8 @@ class Jena(TriplestoreBackend):
         sparql : str
             The SPARQL update string to be sent to the server.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the update operation fails with a non-success status code.
         """
@@ -251,7 +260,8 @@ class Jena(TriplestoreBackend):
         Ensure that the configured dataset exists in Apache Jena Fuseki.
         If it does not, attempt to create it using the Admin REST API.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If unable to connect to the server or if dataset creation fails.
         """
