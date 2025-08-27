@@ -1,45 +1,55 @@
 # Triplestore implementations
 
-There are many different triple-store implementations.
+A variety of triplestore implementations were evaluated during the development of this library.  
+They are categorized below into **implemented backends** and **evaluated but not implemented**, with justifications provided.
 
+---
 
-## Apache Jena
-  - https://jena.apache.org/
-  - license: Apache-2.0
+## Implemented Backends
 
-## AnzoGraph 
-  - license: commercial
-  - no cost, anonymous for mem < 8GB
-    - (name needed for mem < 16GB)
-  - deployment: docker
+The following triplestores have been successfully integrated into this library:
 
-## AllegroGraph 
-  - license: commercial
-  - no cost for triples <8M
-  - deployment: tar.gz server
+- **AllegroGraph**  
+  - License: commercial (free tier available for datasets up to 8M triples)  
+  - Deployment: distributed as a tar.gz server package  
 
-## BlazeGraph
-  - https://blazegraph.com/
-  - license: GPLv2
-  - deployment: JAR file
+- **Apache Jena**  
+  - License: Apache-2.0  
+  - Deployment: distributed as a standalone JAR file  
 
-## KuzuDB
-  - https://kuzudb.com/
-  - license: MIT
-  - deployment: tar.gz server
+- **Blazegraph**  
+  - License: GPLv2  
+  - Deployment: distributed as a standalone JAR file
 
-## Ontotext GraphDB
-  - https://www.ontotext.com/
-  - license: commercial
-  - GraphDB Free comes with a single-core license
-  - 1.8 Million triplets into the free version of Graph DB.
+- **GraphDB**  
+  - License: commercial (GraphDB Free provides a single-core license with support for up to 1.8M triples)  
+  - Deployment: distributed as a tar.gz server package    
 
-## MilleniumDB
+- **Oxigraph**  
+  - License: MIT  
+  - Deployment: provided as a native Rust binary with Python bindings available  
 
-## Oxigraph
-  - https://github.com/oxigraph/oxigraph
+---
 
-## Stardog
-  - https://www.stardog.com
-  - license: commercial
+## Evaluated but Not Implemented
 
+The following triplestores were examined but could not be integrated, for the reasons outlined below:
+
+- **KùzuDB**  
+  - License: MIT  
+  - Limitation: Lacks support for SPARQL and does not provide the ability to ingest `.ttl` (Turtle) files, which are essential requirements for this library.  
+
+- **MillenniumDB**  
+  - License: GPLv3  
+  - Limitation: As stated in the [official repository](https://github.com/MillenniumDB/MillenniumDB):  
+    *“This project is still in active development and is not production ready yet, some functionality is missing and there may be bugs.”*  
+
+- **AnzoGraph**  
+  - License: commercial  
+  - Limitation: The product is no longer actively offered or maintained.  
+
+- **Stardog**  
+  - License: commercial  
+  - Limitation: Only available as a paid product; no adequate free tier exists to enable integration within this project.  
+
+---
