@@ -8,6 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
+from triplestore.network_utils import detect_graphdb_url
 
 logger = logging.getLogger(__name__)
 
@@ -29,14 +30,15 @@ class GraphDB(TriplestoreBackend):
             - auth (optional): Tuple (username, password) for HTTP Basic Auth.
             - graph (optional): Named graph URI for scoped operations.
 
-        Raises:
+        Raises
+        ------
         ValueError
             If the 'repository' key is missing from the configuration.
         RuntimeError
             If the repository does not exist and cannot be created.
         """
         super().__init__(config)
-        self.base_url = config.get("base_url", "http://localhost:7200")
+        self.base_url = config.get("base_url", detect_graphdb_url())
         self.repository = config.get("repository")
         self.auth = config.get("auth")
         self.graph_uri = config.get("graph")
@@ -61,7 +63,8 @@ class GraphDB(TriplestoreBackend):
         filename : str
             Path to the Turtle (.ttl) file to be loaded.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the server returns an error status during data loading.
         """
@@ -131,7 +134,8 @@ class GraphDB(TriplestoreBackend):
         list of dict
             The list of query result bindings.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the query fails or the server returns an error response.
         """
@@ -219,7 +223,8 @@ class GraphDB(TriplestoreBackend):
         sparql : str
             The SPARQL update string to be sent to the server.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the update operation fails with a non-success status code.
         """
@@ -233,7 +238,8 @@ class GraphDB(TriplestoreBackend):
         Ensure that the configured repository exists in GraphDB.
         If it does not, attempt to create it using the REST API.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If unable to connect to the server or if repository creation fails.
         """
