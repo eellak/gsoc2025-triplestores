@@ -9,23 +9,23 @@ They are categorized below into **implemented backends** and **evaluated but not
 
 The following triplestores have been successfully integrated into this library:
 
-- **AllegroGraph**  
+### AllegroGraph 
   - License: commercial (free tier available for datasets up to 8M triples)  
   - Deployment: distributed as a tar.gz server package  
 
-- **Apache Jena**  
+### Apache Jena
   - License: Apache-2.0  
   - Deployment: distributed as a standalone JAR file  
 
-- **Blazegraph**  
+### Blazegraph  
   - License: GPLv2  
   - Deployment: distributed as a standalone JAR file
 
-- **GraphDB**  
+### GraphDB  
   - License: commercial (GraphDB Free provides a single-core license with support for up to 1.8M triples)  
   - Deployment: distributed as a tar.gz server package    
 
-- **Oxigraph**  
+### Oxigraph 
   - License: MIT  
   - Deployment: provided as a native Rust binary with Python bindings available  
 
@@ -35,20 +35,20 @@ The following triplestores have been successfully integrated into this library:
 
 The following triplestores were examined but could not be integrated, for the reasons outlined below:
 
-- **KùzuDB**  
+### KùzuDB
   - License: MIT  
   - Limitation: Lacks support for SPARQL and does not provide the ability to ingest `.ttl` (Turtle) files, which are essential requirements for this library.  
 
-- **MillenniumDB**  
+### MillenniumDB 
   - License: GPLv3  
   - Limitation: As stated in the [official repository](https://github.com/MillenniumDB/MillenniumDB):  
     *“This project is still in active development and is not production ready yet, some functionality is missing and there may be bugs.”*  
 
-- **AnzoGraph**  
+### AnzoGraph
   - License: commercial  
   - Limitation: The product is no longer actively offered or maintained.  
 
-- **Stardog**  
+### Stardog 
   - License: commercial  
   - Limitation: Only available as a paid product; no adequate free tier exists to enable integration within this project.  
 
