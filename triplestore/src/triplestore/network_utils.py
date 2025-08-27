@@ -30,15 +30,3 @@ def detect_host_url(port: int, path: str = "", fallback: str | None = None) -> s
 
 def detect_graphdb_url() -> str:
     return detect_host_url(7200)
-
-
-# def detect_blazegraph_url() -> str:
-#     return detect_host_url(9999, "/blazegraph")
-
-
-def init_allegrograph_repo(repo_name: str):
-    try:
-        subprocess.run(["bash", "./bench/init_allegrograph_repo.sh", repo_name], check=True)
-    except subprocess.CalledProcessError as e:
-        msg = f"Failed to initialize AllegroGraph repo '{repo_name}'"
-        raise RuntimeError(msg) from e

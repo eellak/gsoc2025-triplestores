@@ -11,6 +11,7 @@ authors = [
 requires-python = ">=3.10"
 
 dependencies = [
+    "agraph-python>=104.3.0",
     "psutil>=7.0.0",
     "pyoxigraph>=0.4.11",
     "requests>=2.32.4",
@@ -21,7 +22,10 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project.optional-dependencies]
-allegrograph = ["requests>=2.32.4"]
+allegrograph = [
+    "agraph-python>=104.3.0",
+    "requests>=2.32.4",
+]
 
 blazegraph = ["requests>=2.32.4"]
 
@@ -35,6 +39,7 @@ jena =[
 oxigraph = ["pyoxigraph>=0.4.11"]
 
 all = [
+    "agraph-python>=104.3.0",
     "psutil>=7.0.0",
     "pyoxigraph>=0.4.11",
     "requests>=2.32.4",
