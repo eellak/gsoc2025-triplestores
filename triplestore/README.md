@@ -14,12 +14,32 @@ to the underlying triplestore implementation.
 
 ## Supported Backends
 
-- TODO: *list supported triplestores here, e.g., Apache Jena, Virtuoso, Blazegraph*
+The library provides a unified abstraction layer for multiple triplestores.  
+Currently supported backends (alphabetically):
+
+- AllegroGraph
+- Apache Jena
+- Blazegraph
+- GraphDB
+- Oxigraph
 
 ## Installation
 
+You can install the library along with **all supported backends** using:
+
 ```bash
 pip install triplestore
+# or
+pip install triplestore[all]
+```
+
+Alternatively, you can install the library with a **specific backend** only:
+```bash
+pip install triplestore[<backend>]
+```
+For example:
+```bash
+pip install triplestore[oxigraph]
 ```
 
 ## Usage
