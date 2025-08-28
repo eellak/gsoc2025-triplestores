@@ -145,6 +145,62 @@ class GraphDB(TriplestoreBackend):
         bindings = data.get("results", {}).get("bindings", [])
         return [{k: v["value"] for k, v in row.items()} for row in bindings]
 
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL query (SELECT, ASK, CONSTRUCT, DESCRIBE, UPDATE).
+
+        Parameters
+        ----------
+        sparql : str
+            The SPARQL query or update string.
+
+        Returns
+        -------
+        Any
+            - list of dict for SELECT
+            - bool for ASK
+            - str (Turtle RDF) for CONSTRUCT/DESCRIBE
+            - None for UPDATE operations
+
+        Raises
+        ------
+        RuntimeError
+            If the server responds with an error status.
+        """
+        qstrip = sparql.lstrip()
+        query_type = qstrip.split(None, 1)[0].upper() if qstrip else ""
+
+        # SELECT / ASK
+        if query_type in {"SELECT", "ASK"}:
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+            if response.status_code != 200:
+                msg = f"[GraphDB] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            data = response.json()
+            if query_type == "ASK":
+                return bool(data.get("boolean", False))
+            bindings = data.get("results", {}).get("bindings", [])
+            return [{k: v["value"] for k, v in row.items()} for row in bindings]
+
+        # CONSTRUCT / DESCRIBE
+        if query_type in {"CONSTRUCT", "DESCRIBE"}:
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=None)
+            if response.status_code != 200:
+                msg = f"[GraphDB] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
+            return response.text
+
+        #  UPDATE operations (INSERT, DELETE, CLEAR, DROP, LOAD, CREATE, etc.)
+        if query_type in {
+            "WITH", "INSERT", "DELETE", "LOAD", "CLEAR", "CREATE", "DROP",
+            "MOVE", "COPY", "ADD", "MODIFY"
+        }:
+            self._run_update(sparql)
+            return None
+
+        msg = f"[GraphDB] Unsupported SPARQL keyword: {query_type}"
+        raise RuntimeError(msg)
+
     def clear(self) -> None:
         """
         Remove all data from the GraphDB repository (default and named graphs).
