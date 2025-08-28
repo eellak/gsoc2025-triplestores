@@ -29,9 +29,33 @@ class TriplestoreBackend(ABC):
         pass
 
     @abstractmethod
+    def delete(self, subject: str, predicate: str, obj: str) -> None:
+        """
+        Delete a single RDF triple from the store.
+        """
+        pass
+
+    @abstractmethod
     def query(self, sparql: str) -> Any:
         """
-        Execute a SPARQL query and return results.
+        Execute a SPARQL *SELECT* query and return results.
+
+        - SELECT -> typically returns a list of dicts with variable bindings
+        """
+        pass
+
+    @abstractmethod
+    def execute(self, sparql: str) -> Any:
+        """
+        Execute any SPARQL query (SELECT, ASK, CONSTRUCT, DESCRIBE, UPDATE).
+
+        Returns
+        -------
+        Any
+            - list of dict for SELECT queries
+            - bool for ASK queries
+            - str (RDF in Turtle) for CONSTRUCT/DESCRIBE
+            - None for UPDATE operations
         """
         pass
 

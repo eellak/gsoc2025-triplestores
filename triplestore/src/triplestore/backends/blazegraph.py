@@ -25,14 +25,18 @@ class Blazegraph(TriplestoreBackend):
         config : dict
             A configuration dictionary containing:
             - base_url (optional): The base URL of the Blazegraph instance.
-            - namespace (optional): The namespace to use (default: "kb").
+            - namespace : The namespace to use.
             - graph (optional): Named graph URI for scoped operations.
         """
 
         super().__init__(config)
         self.base_url = config.get("base_url", "http://172.27.148.51:9999/blazegraph")
-        self.namespace = config.get("namespace", "kb")
+        self.namespace = config.get("namespace")
         self.graph_uri = config.get("graph")
+
+        if not self.namespace:
+            msg = "[Blazegraph] Missing required 'namespace' in config."
+            raise ValueError(msg)
 
         self.update_url = f"{self.base_url}/namespace/{self.namespace}/sparql"
         self.query_url = self.update_url
@@ -51,7 +55,10 @@ class Blazegraph(TriplestoreBackend):
         filename : str
             Path to the Turtle file.
 
-        Raises:
+        Raises
+        ------
+        FileNotFoundError
+            If the file does not exist
         RuntimeError
             If the server responds with an error during loading.
         """
@@ -121,7 +128,8 @@ class Blazegraph(TriplestoreBackend):
             - str (RDF serialization) for CONSTRUCT/DESCRIBE
             - None for UPDATE operations
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the server responds with an error.
         """
@@ -169,7 +177,8 @@ class Blazegraph(TriplestoreBackend):
         list of dict
             A list of bindings from the query results.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the query fails or the response is invalid.
         """
@@ -201,7 +210,8 @@ class Blazegraph(TriplestoreBackend):
         sparql : str
             The SPARQL update string.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the update fails with a non-success HTTP status.
         """

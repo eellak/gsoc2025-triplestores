@@ -3,10 +3,12 @@
 
 import logging
 import os
+import urllib.parse as urlparse
 from pathlib import Path
 from typing import Any
 
 import requests
+from franz.openrdf.connect import ag_connect
 
 from triplestore.base import TriplestoreBackend
 
@@ -28,6 +30,7 @@ class AllegroGraph(TriplestoreBackend):
             Connection settings:
               - base_url (str, optional): Base URL of AllegroGraph (default: http://localhost:10035).
               - repository (str, required): Target repository name.
+              - catalog (str, optional): Catalog name in AllegroGraph under which the repository resides.
               - auth (tuple[str, str], optional): Basic Auth credentials (username, password).
               - graph (str, optional): Named graph URI for scoping operations.
 
@@ -40,6 +43,7 @@ class AllegroGraph(TriplestoreBackend):
         super().__init__(config)
         self.base_url: str = config.get("base_url", "http://localhost:10035")
         self.repository: str | None = config.get("repository")
+        self.catalog: str | None = config.get("catalog")
         self.graph_uri: str | None = config.get("graph")
 
         if not self.repository:
@@ -78,9 +82,15 @@ class AllegroGraph(TriplestoreBackend):
             raise ValueError(msg)
         self.auth = (username, password)
 
-        self.query_url = f"{self.base_url}/repositories/{self.repository}"
-        self.update_url = f"{self.base_url}/repositories/{self.repository}/statements"
-        self.load_url = f"{self.base_url}/repositories/{self.repository}/statements"
+        self._ensure_repository_exists()
+
+        if self.catalog:
+            base_repo_url = f"{self.base_url}/catalogs/{self.catalog}/repositories/{self.repository}"
+        else:
+            base_repo_url = f"{self.base_url}/repositories/{self.repository}"
+        self.query_url = base_repo_url
+        self.update_url = f"{base_repo_url}/statements"
+        self.load_url = f"{base_repo_url}/statements"
 
         self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_update = {"Content-Type": "application/x-www-form-urlencoded"}
@@ -170,7 +180,8 @@ class AllegroGraph(TriplestoreBackend):
         list of dict
             The list of query result bindings.
 
-        Raises:
+        Raises
+        ------
         RuntimeError
             If the query fails or the server returns an error response.
         """
@@ -217,7 +228,8 @@ class AllegroGraph(TriplestoreBackend):
             response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
 
             if response.status_code != 200:
-                raise RuntimeError(f"[AllegroGraph] Query failed {response.status_code}:\n{response.text}")
+                msg = f"[AllegroGraph] Query failed {response.status_code}:\n{response.text}"
+                raise RuntimeError(msg)
 
             data = response.json()
             if query_type == "ASK":
@@ -271,3 +283,21 @@ class AllegroGraph(TriplestoreBackend):
         if response.status_code not in {200, 204, 201}:
             msg = f"[AllegroGraph] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
+
+    def _ensure_repository_exists(self) -> None:
+        """
+        Ensure that the AllegroGraph repository exists.
+        - Creates it if missing.
+        - Opens it if already present (does not clear).
+        """
+        try:
+            parsed = urlparse.urlparse(self.base_url)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or 10035
+
+            with ag_connect(self.repository, host=host, port=port, user=self.auth[0], password=self.auth[1], catalog=self.catalog,
+                            create=True, clear=False) as conn:
+                _ = conn.size()
+        except Exception as e:
+            msg = f"[AllegroGraph] Failed to ensure repository '{self.repository}' exists"
+            raise RuntimeError(msg) from e

@@ -16,8 +16,6 @@ import pytest
 import requests
 from triplestore import TriplestoreFactory
 
-from network_utils import init_allegrograph_repo
-
 # SPARQL Test Data
 SUBJECT = "http://example.org/s"
 PREDICATE = "http://example.org/p"
@@ -49,11 +47,6 @@ pytestmark = pytest.mark.skipif(
     not is_allegrograph_available(),
     reason=f"AllegroGraph instance is not reachable at {config['base_url']}"
 )
-
-
-@pytest.fixture(scope="module", autouse=True)
-def setup_repo():
-    init_allegrograph_repo(REPO_NAME)
 
 
 def test_add_and_query_triple():
