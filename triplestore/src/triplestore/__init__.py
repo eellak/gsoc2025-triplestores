@@ -20,7 +20,7 @@ _BACKENDS: dict[str, type[TriplestoreBackend]] = {
 }
 
 
-def TriplestoreFactory(backend: str, config: dict[str, Any]) -> TriplestoreBackend:
+def Triplestore(backend: str, config: dict[str, Any]) -> TriplestoreBackend:
     """
     Create an instance of the appropriate triplestore backend.
     """
