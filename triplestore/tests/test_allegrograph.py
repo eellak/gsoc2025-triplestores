@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pytest
 import requests
-from triplestore import TriplestoreFactory
+from triplestore import Triplestore
 
 # SPARQL Test Data
 SUBJECT = "http://example.org/s"
@@ -51,7 +51,7 @@ pytestmark = pytest.mark.skipif(
 
 def test_add_and_query_triple():
     """Test adding a triple and retrieving it via SPARQL."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.add(SUBJECT, PREDICATE, OBJECT)
     results = store.query(SPARQL_QUERY)
@@ -61,7 +61,7 @@ def test_add_and_query_triple():
 
 def test_multiple_triples_query():
     """Test querying multiple triples with the same predicate-object pair."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.add("http://example.org/s1", PREDICATE, OBJECT)
     store.add("http://example.org/s2", PREDICATE, OBJECT)
@@ -74,7 +74,7 @@ def test_multiple_triples_query():
 
 def test_delete_triple():
     """Test that deleting a triple removes it from the store."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.add(SUBJECT, PREDICATE, OBJECT)
     assert len(store.query(SPARQL_QUERY)) == 1
@@ -85,7 +85,7 @@ def test_delete_triple():
 
 def test_query_roundtrip_add():
     """Test add-delete-add cycle to ensure consistent state after re-adding a triple."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.add(SUBJECT, PREDICATE, OBJECT)
     initial_results = store.query(SPARQL_QUERY)
@@ -104,7 +104,7 @@ def test_query_roundtrip_add():
 
 def test_query_returns_empty_when_no_match():
     """Test that a SPARQL query returns no results when no match exists."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.add(SUBJECT, PREDICATE, OBJECT)
     results = store.query("SELECT ?s WHERE { <http://example.org/unknown> ?p ?o }")
@@ -117,7 +117,7 @@ def test_load_from_turtle_file():
     with tempfile.NamedTemporaryFile(delete=False, mode="w", suffix=".ttl", encoding="utf-8") as f:
         f.write(turtle_data)
         tmp_path = f.name
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.load(tmp_path)
     results = store.query(SPARQL_QUERY)
@@ -128,7 +128,7 @@ def test_load_from_turtle_file():
 
 def test_clear():
     """Test that clear() removes all triples from the store."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.add(SUBJECT, PREDICATE, OBJECT)
     store.clear()
     results = store.query(SPARQL_QUERY)
@@ -137,7 +137,7 @@ def test_clear():
 
 def test_clear_twice_is_safe():
     """Test that calling clear() multiple times doesn't raise or fail."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
     store.clear()
     store.add(SUBJECT, PREDICATE, OBJECT)
@@ -148,7 +148,7 @@ def test_clear_twice_is_safe():
 
 def test_execute():
     """End-to-end test for execute(): INSERT/DELETE/CLEAR + ASK/SELECT/DESCRIBE/CONSTRUCT."""
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
     store.clear()
 
     graph = config["graph"]
