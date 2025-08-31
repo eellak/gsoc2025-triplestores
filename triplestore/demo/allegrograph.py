@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from triplestore import TriplestoreFactory
+from triplestore import Triplestore
 
 config = {
     "repository": "test2025",
@@ -12,7 +12,7 @@ config = {
 
 
 def main() -> None:
-    store = TriplestoreFactory("allegrograph", config=config)
+    store = Triplestore("allegrograph", config=config)
 
     print(" Loading data…")
     store.load("triplestore/data.ttl")
