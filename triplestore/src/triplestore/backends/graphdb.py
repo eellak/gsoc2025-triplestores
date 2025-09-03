@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
-from triplestore.network_utils import detect_graphdb_url
+from triplestore.network_utils import detect_graphdb_url, validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +17,16 @@ class GraphDB(TriplestoreBackend):
     """
     A triplestore backend implementation for Ontotext GraphDB using its HTTP REST API.
     """
+
+    REQUIRED_KEYS = {"repository"}
+    OPTIONAL_DEFAULTS = {
+        "base_url": detect_graphdb_url(),
+        "graph": None,
+        "auth": None,
+    }
+    ALIASES = {
+        "graph_uri": "graph",
+    }
 
     def __init__(self, config: dict[str, Any]) -> None:
         """
@@ -37,18 +47,18 @@ class GraphDB(TriplestoreBackend):
         RuntimeError
             If the repository does not exist and cannot be created.
         """
-        super().__init__(config)
-        self.base_url = config.get("base_url", detect_graphdb_url())
-        self.repository = config.get("repository")
-        self.auth = config.get("auth")
-        self.graph_uri = config.get("graph")
+        configuration = validate_config(config, required_keys=self.REQUIRED_KEYS, optional_defaults=self.OPTIONAL_DEFAULTS,
+                                        alias_map=self.ALIASES, backend_name="GraphDB")
 
-        if not self.repository:
-            msg = "[GraphDB] Missing required 'repository' in config."
-            raise ValueError(msg)
+        super().__init__(configuration)
+        self.base_url = configuration["base_url"]
+        self.repository = configuration["repository"]
+        self.auth = configuration["auth"]
+        self.graph_uri = configuration["graph"]
 
         self.query_url = f"{self.base_url}/repositories/{self.repository}"
         self.update_url = f"{self.query_url}/statements"
+
         self.headers_query = {"Accept": "application/sparql-results+json"}
         self.headers_update = {"Content-Type": "application/sparql-update"}
         self.headers_load = {"Content-Type": "text/turtle"}

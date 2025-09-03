@@ -11,6 +11,7 @@ import requests
 from franz.openrdf.connect import ag_connect
 
 from triplestore.base import TriplestoreBackend
+from triplestore.network_utils import validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,17 @@ class AllegroGraph(TriplestoreBackend):
     """
     A triplestore backend implementation for AllegroGraph using its SPARQL HTTP interface.
     """
+
+    REQUIRED_KEYS = {"repository"}
+    OPTIONAL_DEFAULTS = {
+        "base_url": "http://localhost:10035",
+        "catalog": None,
+        "graph": None,
+        "auth": None,
+    }
+    ALIASES = {
+        "graph_uri": "graph",
+    }
 
     def __init__(self, config: dict[str, Any]) -> None:
         """
@@ -40,17 +52,16 @@ class AllegroGraph(TriplestoreBackend):
             If 'repository' is missing or credentials are not provided via config or environment variables.
         """
 
-        super().__init__(config)
-        self.base_url: str = config.get("base_url", "http://localhost:10035")
-        self.repository: str | None = config.get("repository")
-        self.catalog: str | None = config.get("catalog")
-        self.graph_uri: str | None = config.get("graph")
+        configuration = validate_config(config, required_keys=self.REQUIRED_KEYS, optional_defaults=self.OPTIONAL_DEFAULTS,
+                                        alias_map=self.ALIASES, backend_name="AllegroGraph")
 
-        if not self.repository:
-            msg = "[AllegroGraph] Missing required 'repository' in config."
-            raise ValueError(msg)
+        super().__init__(configuration)
+        self.base_url = configuration["base_url"]
+        self.repository = configuration["repository"]
+        self.catalog = configuration["catalog"]
+        self.graph_uri = configuration["graph"]
 
-        auth_cfg = config.get("auth")
+        auth_cfg = configuration["auth"]
         username: str | None = None
         password: str | None = None
 

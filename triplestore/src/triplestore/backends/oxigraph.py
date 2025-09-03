@@ -8,6 +8,7 @@ from typing import Any, Optional
 from pyoxigraph import DefaultGraph, NamedNode, Quad, QueryBoolean, QueryTriples, RdfFormat, Store
 
 from triplestore.base import TriplestoreBackend
+from triplestore.network_utils import validate_config
 
 
 class Oxigraph(TriplestoreBackend):
@@ -15,6 +16,14 @@ class Oxigraph(TriplestoreBackend):
     A triplestore backend implementation for Oxigraph using the pyoxigraph API.
 
     """
+    REQUIRED_KEYS = set()
+    OPTIONAL_DEFAULTS = {
+        "graph": None,
+    }
+    ALIASES = {
+        "graph_uri": "graph",
+    }
+
     def __init__(self, config: dict[str, Any]) -> None:
         """
         Initialize the Oxigraph backend with the given configuration.
@@ -24,9 +33,12 @@ class Oxigraph(TriplestoreBackend):
             Expected keys (optional):
               - "graph": str -> default named graph to use (if provided).
         """
-        super().__init__(config)
+        configuration = validate_config(config, required_keys=self.REQUIRED_KEYS, optional_defaults=self.OPTIONAL_DEFAULTS,
+                                        alias_map=self.ALIASES, backend_name="Oxigraph")
+
+        super().__init__(configuration)
         self.store = Store()
-        self.graph_uri: Optional[str] = config.get("graph")
+        self.graph_uri: Optional[str] = configuration["graph"]
         if self.graph_uri:
             self.store.add_graph(NamedNode(self.graph_uri))
 
