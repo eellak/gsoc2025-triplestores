@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from triplestore import TriplestoreFactory
+from triplestore import Triplestore
 
 config = {
     "dataset": "test2025",
@@ -12,7 +12,7 @@ config = {
 
 
 def main() -> None:
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
 
     print(" Loading data…")
     store.load("triplestore/data.ttl")

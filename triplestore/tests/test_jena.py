@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 import requests
-from triplestore import TriplestoreFactory
+from triplestore import Triplestore
 
 SUBJECT = "http://example.org/s"
 PREDICATE = "http://example.org/p"
@@ -31,7 +31,7 @@ config = {
 
 def test_add_and_query_triple():
     """Test adding a triple and retrieving it via SPARQL."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     store.add(SUBJECT, PREDICATE, OBJECT)
@@ -43,7 +43,7 @@ def test_add_and_query_triple():
 
 def test_multiple_triples_query():
     """Test querying multiple triples with the same predicate-object pair."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     store.add("http://example.org/s1", PREDICATE, OBJECT)
@@ -65,7 +65,7 @@ def test_multiple_triples_query():
 
 def test_delete_triple():
     """Test that deleting a triple removes it from the store."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     store.add(SUBJECT, PREDICATE, OBJECT)
@@ -78,7 +78,7 @@ def test_delete_triple():
 
 def test_query_roundtrip_add():
     """Test add-delete-add cycle to ensure consistent state after re-adding a triple."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     store.add(SUBJECT, PREDICATE, OBJECT)
@@ -113,7 +113,7 @@ def test_query_roundtrip_add():
 
 def test_query_returns_empty_when_no_match():
     """Test that a SPARQL query returns no results when no match exists."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     store.add(SUBJECT, PREDICATE, OBJECT)
@@ -129,7 +129,7 @@ def test_load_from_turtle_file():
         f.write(turtle_data)
         tmp_path = f.name
 
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
     store.load(tmp_path)
 
@@ -142,7 +142,7 @@ def test_load_from_turtle_file():
 
 def test_clear():
     """Test that clear() removes all triples from the store."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.add(SUBJECT, PREDICATE, OBJECT)
 
     store.clear()
@@ -153,7 +153,7 @@ def test_clear():
 
 def test_clear_twice_is_safe():
     """Test that calling clear() multiple times doesn't raise or fail."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
     store.clear()
 
@@ -166,7 +166,7 @@ def test_clear_twice_is_safe():
 
 def test_execute():
     """End-to-end test for execute(): INSERT/DELETE/CLEAR + ASK/SELECT/DESCRIBE/CONSTRUCT."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     graph = config["graph"]
@@ -233,7 +233,7 @@ def test_execute():
 
 def test_stop_server():
     """Test that stop_server() terminates a running Fuseki instance."""
-    store = TriplestoreFactory("jena", config=config)
+    store = Triplestore("jena", config=config)
     store.clear()
 
     result = store.stop_server()

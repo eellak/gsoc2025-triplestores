@@ -1,7 +1,7 @@
 # Copyright (C) 2025 Maira Papadopoulou
 # SPDX-License-Identifier: Apache-2.0
 
-from triplestore import TriplestoreFactory
+from triplestore import Triplestore
 
 config = {
     "repository": "test2025",
@@ -10,7 +10,7 @@ config = {
 
 
 def main() -> None:
-    store = TriplestoreFactory("graphdb", config=config)
+    store = Triplestore("graphdb", config=config)
 
     print(" Loading data…")
     store.load("triplestore/data.ttl")
