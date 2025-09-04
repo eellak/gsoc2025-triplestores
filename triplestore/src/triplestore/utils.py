@@ -11,6 +11,8 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
+from triplestore.exceptions import TriplestoreMissingConfigValue
+
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +108,7 @@ def validate_config(user_config: Mapping[str, Any], *, required_keys: Iterable[s
             f"[{backend_name}] Configuration error: Missing required config keys for: '"
             f"{', '.join(missing_keys)}'"
         )
-        raise ValueError(msg)
+        raise TriplestoreMissingConfigValue(msg)
 
     for key, default_val in optional_defaults.items():
         if key not in normalized_config:

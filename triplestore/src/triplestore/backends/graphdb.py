@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
-from triplestore.src.triplestore.utils import detect_graphdb_url, validate_config
+from triplestore.utils import detect_graphdb_url, validate_config
 
 logger = logging.getLogger(__name__)
 

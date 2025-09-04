@@ -11,7 +11,7 @@ import requests
 from franz.openrdf.connect import ag_connect
 
 from triplestore.base import TriplestoreBackend
-from triplestore.src.triplestore.utils import validate_config
+from triplestore.utils import validate_config
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ from typing import Any, Optional
 from pyoxigraph import DefaultGraph, NamedNode, Quad, QueryBoolean, QueryTriples, RdfFormat, Store
 
 from triplestore.base import TriplestoreBackend
-from triplestore.src.triplestore.utils import validate_config
+from triplestore.utils import validate_config
 
 
 class Oxigraph(TriplestoreBackend):
