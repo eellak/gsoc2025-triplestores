@@ -12,7 +12,7 @@ import requests
 
 from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, first_keyword, stop_fuseki_server
 from triplestore.base import TriplestoreBackend
-from triplestore.network_utils import validate_config
+from triplestore.src.triplestore.utils import validate_config
 
 
 class Jena(TriplestoreBackend):

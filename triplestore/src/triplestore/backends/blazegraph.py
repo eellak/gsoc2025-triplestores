@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
-from triplestore.network_utils import validate_config
+from triplestore.src.triplestore.utils import validate_config
 
 logger = logging.getLogger(__name__)
 
