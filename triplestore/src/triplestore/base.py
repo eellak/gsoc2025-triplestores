@@ -22,14 +22,14 @@ class TriplestoreBackend(ABC):
         pass
 
     @abstractmethod
-    def add(self, subject: str, predicate: str, obj: str) -> None:
+    def add(self, subject: str, predicate: str, object: str) -> None:
         """
         Add a single RDF triple to the store.
         """
         pass
 
     @abstractmethod
-    def delete(self, subject: str, predicate: str, obj: str) -> None:
+    def delete(self, subject: str, predicate: str, object: str) -> None:
         """
         Delete a single RDF triple from the store.
         """
