@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 import requests
 from triplestore import Triplestore
-from triplestore.network_utils import detect_graphdb_url
+from triplestore.utils import detect_graphdb_url
 
 SUBJECT = "http://example.org/s"
 PREDICATE = "http://example.org/p"

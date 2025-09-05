@@ -12,12 +12,23 @@ import requests
 
 from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, first_keyword, stop_fuseki_server
 from triplestore.base import TriplestoreBackend
+from triplestore.utils import validate_config
 
 
 class Jena(TriplestoreBackend):
     """
     A triplestore backend implementation for Apache Jena Fuseki using its HTTP REST API.
     """
+
+    REQUIRED_KEYS = {"dataset"}
+    OPTIONAL_DEFAULTS = {
+        "base_url": "http://localhost:3030",
+        "graph": None,
+        "auth": None,
+    }
+    ALIASES = {
+        "graph_uri": "graph",
+    }
 
     def __init__(self, config: dict[str, Any]) -> None:
         """
@@ -31,17 +42,16 @@ class Jena(TriplestoreBackend):
             - auth (optional): Tuple (username, password) for HTTP Basic Auth.
             - graph (optional): Named graph URI for scoped operations.
         """
-        super().__init__(config)
-        self.base_url = config.get("base_url", "http://localhost:3030")
-        self.dataset = config.get("dataset")
+        configuration = validate_config(config, required_keys=self.REQUIRED_KEYS, optional_defaults=self.OPTIONAL_DEFAULTS,
+                                        alias_map=self.ALIASES, backend_name="APACHE JENA")
 
-        if not self.dataset:
-            msg = "[APACHE JENA] Missing required 'dataset' in config."
-            raise ValueError(msg)
+        super().__init__(configuration)
+        self.base_url = configuration["base_url"]
+        self.dataset = configuration["dataset"]
 
         create_config_and_run_fuseki(self.dataset)
-        self.auth = config.get("auth")
-        self.graph_uri = config.get("graph")
+        self.auth = configuration["auth"]
+        self.graph_uri = configuration["graph"]
         if self.graph_uri:
             self._effective_graph = self.graph_uri
         else:
