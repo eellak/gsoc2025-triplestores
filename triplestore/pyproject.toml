@@ -11,10 +11,7 @@ authors = [
 requires-python = ">=3.10"
 
 dependencies = [
-    "agraph-python>=104.3.0",
-    "psutil>=7.0.0",
-    "pyoxigraph>=0.4.11",
-    "requests>=2.32.4",
+
 ]
 
 [build-system]
@@ -54,3 +51,10 @@ dev = [
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
+
+[project.entry-points."triplestore.backends"]
+allegrograph = "triplestore.backends.allegrograph:AllegroGraph"
+blazegraph   = "triplestore.backends.blazegraph:Blazegraph"
+graphdb      = "triplestore.backends.graphdb:GraphDB"
+jena         = "triplestore.backends.jena:Jena"
+oxigraph     = "triplestore.backends.oxigraph:Oxigraph"
