@@ -103,23 +103,35 @@ class Oxigraph(TriplestoreBackend):
         Any
             Raw result object if the type cannot be determined.
         """
-        res = self.store.query(sparql)
+        result = self.store.query(sparql)
 
         # ASK
-        if isinstance(res, QueryBoolean):
-            return bool(res)
+        if isinstance(result, QueryBoolean):
+            return bool(result)
 
         # CONSTRUCT / DESCRIBE
-        if isinstance(res, QueryTriples):
-            return res.serialize(format=RdfFormat.TURTLE).decode("utf-8")
+        if isinstance(result, QueryTriples):
+            return result.serialize(format=RdfFormat.TURTLE).decode("utf-8")
 
         # SELECT
         try:
-            iter(res)
+            iter(result)
         except TypeError:
-            return res
+            return result
         else:
-            return list(res)
+            variable_names = [var.value for var in result.variables]
+            solutions = []
+            for solution in result:
+                binding = {}
+                for var_name in variable_names:
+                    try:
+                        term = solution[var_name]
+                    except KeyError:
+                        continue
+                    term_value = getattr(term, "value", None)
+                    binding[var_name] = term_value if term_value is not None else str(term)
+                solutions.append(binding)
+            return solutions
 
     def execute(self, sparql: str) -> Any:
         """

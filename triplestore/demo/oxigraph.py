@@ -16,13 +16,13 @@ def main() -> None:
 
     num_of_triples_query = "SELECT (COUNT(*) AS ?count) WHERE { GRAPH <http://example.org/test> { ?s ?p ?o } }"
     result = store.execute(num_of_triples_query)
-    num_of_triples = result[0]["count"].value
+    num_of_triples = result[0]["count"]
     print(f" Loaded. Triple count in <http://example.org/test>: {int(num_of_triples):,}")
 
     print("\n Clearing graph…")
     store.clear()
     result = store.execute(num_of_triples_query)
-    num_of_triples = result[0]["count"].value
+    num_of_triples = result[0]["count"]
     print(f" Cleared. Triple count in <http://example.org/test>: {int(num_of_triples):,}")
 
 
