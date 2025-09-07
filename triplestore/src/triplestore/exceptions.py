@@ -8,3 +8,6 @@ class TriplestoreError(Exception):
 
 class BackendNotFoundError(TriplestoreError):
     """Raised when a backend is not registered or supported."""
+
+class TriplestoreMissingConfigValue(TriplestoreError):
+    """Raised when a backend configuration is missing required keys."""

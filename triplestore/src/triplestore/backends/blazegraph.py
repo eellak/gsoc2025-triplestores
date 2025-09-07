@@ -8,6 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
+from triplestore.utils import validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +17,15 @@ class Blazegraph(TriplestoreBackend):
     """
     A triplestore backend implementation for Blazegraph using its HTTP REST API.
     """
+
+    REQUIRED_KEYS = {"namespace"}
+    OPTIONAL_DEFAULTS = {
+        "base_url": "http://172.27.148.51:9999/blazegraph",
+        "graph": None,
+    }
+    ALIASES = {
+        "graph_uri": "graph",
+    }
 
     def __init__(self, config: dict[str, Any]) -> None:
         """
@@ -29,14 +39,13 @@ class Blazegraph(TriplestoreBackend):
             - graph (optional): Named graph URI for scoped operations.
         """
 
-        super().__init__(config)
-        self.base_url = config.get("base_url", "http://172.27.148.51:9999/blazegraph")
-        self.namespace = config.get("namespace")
-        self.graph_uri = config.get("graph")
+        configuration = validate_config(config, required_keys=self.REQUIRED_KEYS, optional_defaults=self.OPTIONAL_DEFAULTS,
+                                        alias_map=self.ALIASES, backend_name="Blazegraph")
 
-        if not self.namespace:
-            msg = "[Blazegraph] Missing required 'namespace' in config."
-            raise ValueError(msg)
+        super().__init__(configuration)
+        self.base_url = configuration["base_url"]
+        self.namespace = configuration["namespace"]
+        self.graph_uri = configuration["graph"]
 
         self.update_url = f"{self.base_url}/namespace/{self.namespace}/sparql"
         self.query_url = self.update_url
