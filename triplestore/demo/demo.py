@@ -27,13 +27,15 @@ def main() -> None:
         description="Unified triplestore demo showcasing the abstraction layer."
     )
     parser.add_argument(
+        "--backend",
         "-b",
         choices=["allegrograph", "graphdb", "blazegraph", "jena", "oxigraph"],
         required=True,
+        metavar="BACKEND",
         help="Which backend to run the demo for.",
     )
     args = parser.parse_args()
-    backend = args.b
+    backend = args.backend
 
     if backend not in CONFIGS:
         print(f"Unknown backend: {backend}. Available: {', '.join(CONFIGS)}")
