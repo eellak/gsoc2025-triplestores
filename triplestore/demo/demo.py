@@ -7,17 +7,14 @@ import argparse
 from contextlib import suppress
 from typing import Any
 
-from triplestore import Triplestore
+from triplestore import Triplestore, available_backends
 
 GRAPH_IRI = "http://example.org/test"
 
 # Minimal configs per backend (extend with base_url/credentials if needed)
 CONFIGS: dict[str, dict[str, Any]] = {
-    "allegrograph": {"repository": "test2025", "graph": GRAPH_IRI},
-    "blazegraph": {"namespace": "test2025", "graph": GRAPH_IRI},
-    "graphdb": {"repository": "test2025", "graph": GRAPH_IRI},
-    "jena": {"dataset": "test2025", "graph": GRAPH_IRI},
-    "oxigraph": {"graph": GRAPH_IRI},
+    backend: {"name": "test2025", "graph": GRAPH_IRI}
+    for backend in available_backends()
 }
 
 
@@ -27,17 +24,17 @@ def main() -> None:
         description="Unified triplestore demo showcasing the abstraction layer."
     )
     parser.add_argument(
-        "--backend",
         "-b",
-        choices=["allegrograph", "graphdb", "blazegraph", "jena", "oxigraph"],
+        "--backend",
+        choices=available_backends(),
         required=True,
-        metavar="BACKEND",
+        type=str,
         help="Which backend to run the demo for.",
     )
     args = parser.parse_args()
     backend = args.backend
 
-    if backend not in CONFIGS:
+    if backend not in available_backends():
         print(f"Unknown backend: {backend}. Available: {', '.join(CONFIGS)}")
         return 2
 
