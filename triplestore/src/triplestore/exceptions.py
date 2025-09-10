@@ -6,13 +6,13 @@ class TriplestoreError(Exception):
     """Base exception for the triplestore library."""
 
 
-class BackendNotFoundError(TriplestoreError):
+class BackendNotFoundError(TriplestoreError, ValueError):
     """Raised when a backend is not registered or supported."""
 
 
-class BackendNotInstalledError(TriplestoreError):
+class BackendNotInstalledError(TriplestoreError, ValueError):
     """Raised when a backend is supported, but not installed"""
 
 
-class TriplestoreMissingConfigValue(TriplestoreError):
+class TriplestoreMissingConfigValue(TriplestoreError, ValueError):
     """Raised when a backend configuration is missing required keys."""
