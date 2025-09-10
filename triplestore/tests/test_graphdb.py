@@ -39,7 +39,7 @@ pytestmark = pytest.mark.skipif(
 
 
 config = {
-    "repository": f"testns-{int(time.time())}",
+    "name": f"testns-{int(time.time())}",
     "auth": None,
     "graph": "http://example.org/test"
 }

@@ -23,7 +23,7 @@ SPARQL_QUERY = "SELECT ?s ?p ?o WHERE { GRAPH <http://example.org/test> { ?s ?p 
 
 config = {
     "base_url": "http://172.27.148.51:9999/blazegraph",
-    "namespace": f"testns-{int(time.time())}",
+    "name": f"testns-{int(time.time())}",
     "graph": "http://example.org/test"
 }
 

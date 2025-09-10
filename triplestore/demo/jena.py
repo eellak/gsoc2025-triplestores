@@ -6,7 +6,7 @@ from __future__ import annotations
 from triplestore import Triplestore
 
 config = {
-    "dataset": "test2025",
+    "name": "test2025",
     "graph": "http://example.org/test",
 }
 
