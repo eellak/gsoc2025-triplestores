@@ -21,7 +21,7 @@ class AllegroGraph(TriplestoreBackend):
     A triplestore backend implementation for AllegroGraph using its SPARQL HTTP interface.
     """
 
-    REQUIRED_KEYS = {"repository"}
+    REQUIRED_KEYS = {"name"}
     OPTIONAL_DEFAULTS = {
         "base_url": "http://localhost:10035",
         "catalog": None,
@@ -30,6 +30,7 @@ class AllegroGraph(TriplestoreBackend):
     }
     ALIASES = {
         "graph_uri": "graph",
+        "repository": "name",
     }
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -57,7 +58,7 @@ class AllegroGraph(TriplestoreBackend):
 
         super().__init__(configuration)
         self.base_url = configuration["base_url"]
-        self.repository = configuration["repository"]
+        self.repository = configuration["name"]
         self.catalog = configuration["catalog"]
         self.graph_uri = configuration["graph"]
 

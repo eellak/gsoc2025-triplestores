@@ -20,7 +20,7 @@ class Jena(TriplestoreBackend):
     A triplestore backend implementation for Apache Jena Fuseki using its HTTP REST API.
     """
 
-    REQUIRED_KEYS = {"dataset"}
+    REQUIRED_KEYS = {"name"}
     OPTIONAL_DEFAULTS = {
         "base_url": "http://localhost:3030",
         "graph": None,
@@ -28,6 +28,7 @@ class Jena(TriplestoreBackend):
     }
     ALIASES = {
         "graph_uri": "graph",
+        "dataset": "name",
     }
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -47,7 +48,7 @@ class Jena(TriplestoreBackend):
 
         super().__init__(configuration)
         self.base_url = configuration["base_url"]
-        self.dataset = configuration["dataset"]
+        self.dataset = configuration["name"]
 
         create_config_and_run_fuseki(self.dataset)
         self.auth = configuration["auth"]
