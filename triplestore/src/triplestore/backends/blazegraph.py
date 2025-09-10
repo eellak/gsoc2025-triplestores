@@ -18,13 +18,14 @@ class Blazegraph(TriplestoreBackend):
     A triplestore backend implementation for Blazegraph using its HTTP REST API.
     """
 
-    REQUIRED_KEYS = {"namespace"}
+    REQUIRED_KEYS = {"name"}
     OPTIONAL_DEFAULTS = {
         "base_url": "http://172.27.148.51:9999/blazegraph",
         "graph": None,
     }
     ALIASES = {
         "graph_uri": "graph",
+        "namespace": "name",
     }
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -44,7 +45,7 @@ class Blazegraph(TriplestoreBackend):
 
         super().__init__(configuration)
         self.base_url = configuration["base_url"]
-        self.namespace = configuration["namespace"]
+        self.namespace = configuration["name"]
         self.graph_uri = configuration["graph"]
 
         self.update_url = f"{self.base_url}/namespace/{self.namespace}/sparql"
