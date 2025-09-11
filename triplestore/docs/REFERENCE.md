@@ -28,13 +28,14 @@ Each backend supports different keys. Only the relevant keys for the selected ba
 - **graph**: The target named graph URI where triples will be stored. 
   Example: `config={"graph": "http://example.org/test"}`
 
+- **name**: Unified identifier for the dataset, repository, or namespace, depending on the backend.
+Replaces backend-specific keys such as `repository` (GraphDB, AllegroGraph), `namespace` (Blazegraph), or `dataset` (Jena).
+Example: `config={"name": "test2025"}`
+
 
 ### Backend-specific keys
 
 #### AllegroGraph
-
-- **repository**: Name of the target repository name.
-  Example: `config={"repository": "repo2025"}`
 
 - **catalog**: Name of the catalog inside the server.  
   Example: `config={"catalog": "root"}`
@@ -44,22 +45,10 @@ Each backend supports different keys. Only the relevant keys for the selected ba
 
 #### Apache Jena
 
-- **dataset**: Name of the dataset to connect to.
-  Example: `config={"dataset": "dataset2025"}`
-
 - **auth**: Authentication details when required (tuple of username, password).  
   Example: `config={"auth": ("user", "password")}`
 
-#### Blazegraph
-
-- **namespace**: Name of the target namespace.
-  Example: `config={"namespace": "namespace2025"}`
-
-
 #### GraphDB
-
-- **repository**: Name of the target repository name.
-  Example: `config={"repository": "repo2025"}`
 
 - **auth**: Authentication details when required (tuple of username, password).  
   Example: `config={"auth": ("user", "password")}`
