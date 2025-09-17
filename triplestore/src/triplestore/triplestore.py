@@ -27,6 +27,10 @@ def Triplestore(backend: str, config: dict[str, Any]) -> TriplestoreBackend:
 
     Raises
     ------
+    TypeError
+        If `backend` is not a `str` or `config` is not a `dict`.
+    ValueError
+        If `backend` is an empty string (after stripping whitespace).
     BackendNotFoundError
         No entry point is registered under this name in the installed distribution.
     BackendNotInstalledError
@@ -34,6 +38,23 @@ def Triplestore(backend: str, config: dict[str, Any]) -> TriplestoreBackend:
     TypeError
         The loaded class does not implement `TriplestoreBackend`.
     """
+    if not isinstance(backend, str):
+        msg = (
+        f"Invalid type for parameter 'backend': {type(backend).__name__}.\n"
+        f"Expected a string identifier (e.g., 'oxigraph', 'jena')."
+    )
+        raise TypeError(msg)
+    if backend.strip() == "":
+        msg = (
+        "Invalid value for parameter 'backend': empty string.\n"
+        "You must provide a non-empty backend name (e.g., 'oxigraph')."
+    )
+        raise ValueError(msg)
+    if not isinstance(config, dict):
+        msg = f"Invalid type for parameter 'config': {type(config).__name__}.\n"
+        "Expected a dictionary of backend configuration parameters."
+        raise TypeError(msg)
+
     discover_backends()
     name = backend.lower()
     cls_path = REGISTRY.get(name)
