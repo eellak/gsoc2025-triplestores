@@ -18,7 +18,7 @@ class GraphDB(TriplestoreBackend):
     A triplestore backend implementation for Ontotext GraphDB using its HTTP REST API.
     """
 
-    REQUIRED_KEYS = {"repository"}
+    REQUIRED_KEYS = {"name"}
     OPTIONAL_DEFAULTS = {
         "base_url": detect_graphdb_url(),
         "graph": None,
@@ -26,6 +26,7 @@ class GraphDB(TriplestoreBackend):
     }
     ALIASES = {
         "graph_uri": "graph",
+        "repository": "name"
     }
 
     def __init__(self, config: dict[str, Any]) -> None:
@@ -52,7 +53,7 @@ class GraphDB(TriplestoreBackend):
 
         super().__init__(configuration)
         self.base_url = configuration["base_url"]
-        self.repository = configuration["repository"]
+        self.repository = configuration["name"]
         self.auth = configuration["auth"]
         self.graph_uri = configuration["graph"]
 
