@@ -29,7 +29,7 @@ REPO_NAME = f"testns-{int(time.time())}"
 # Connection configuration
 config = {
     "base_url": "http://localhost:10035",
-    "repository": REPO_NAME,
+    "name": REPO_NAME,
     "graph": "http://example.org/test"
 }
 
