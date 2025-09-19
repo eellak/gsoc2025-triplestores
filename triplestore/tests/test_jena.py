@@ -23,7 +23,7 @@ SPARQL_QUERY = "SELECT ?s ?p ?o WHERE { GRAPH <http://example.org/test> { ?s ?p 
 
 config = {
     "base_url": "http://localhost:3030",
-    "dataset": f"testns-{int(time.time())}",
+    "name": f"testns-{int(time.time())}",
     "auth": None,
     "graph": "http://example.org/test"
 }
