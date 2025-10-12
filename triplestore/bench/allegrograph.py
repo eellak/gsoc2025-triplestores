@@ -13,7 +13,7 @@
 # Copyright (C) 2025 Maira Papadopoulou
 # SPDX-License-Identifier: Apache-2.0
 
-from bench.skeleton import bench_report, benchmark
+from bench.benchmark import bench_report, benchmark
 from triplestore import Triplestore
 
 # configuration
@@ -42,14 +42,14 @@ def query(query_str, _):
 if __name__ == "__main__":
     import sys
 
-    import bench.skeleton
+    import bench.benchmark
 
     if len(sys.argv) != 2:
         print("Usage: python allegrograph.py <turtle_file>")
         sys.exit(1)
 
     turtle_file = sys.argv[1]
-    bench.skeleton.ttlname = turtle_file
+    bench.benchmark.ttlname = turtle_file
 
     benc_res = benchmark("AllegroGraph", init, load, query)
     bench_report("AllegroGraph", *benc_res)

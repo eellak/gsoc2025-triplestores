@@ -13,7 +13,7 @@
 # Copyright (C) 2025 Maira Papadopoulou
 # SPDX-License-Identifier: Apache-2.0
 
-from bench.skeleton import bench_report, benchmark
+from bench.benchmark import bench_report, benchmark
 from triplestore import Triplestore
 
 # configuration
@@ -50,8 +50,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     try:
-        from bench import skeleton
-        skeleton.ttlname = sys.argv[1]
+        from bench import benchmark
+        benchmark.ttlname = sys.argv[1]
         benc_res = benchmark("Apache Jena", init, load, query)
         bench_report("Apache Jena", *benc_res)
     finally:

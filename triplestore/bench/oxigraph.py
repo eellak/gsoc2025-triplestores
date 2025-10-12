@@ -14,7 +14,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 
-from bench.skeleton import bench_report, benchmark
+from bench.benchmark import bench_report, benchmark
 from triplestore import Triplestore
 
 # implementation
@@ -37,14 +37,14 @@ def query(query, _):
 if __name__ == "__main__":
     import sys
 
-    import bench.skeleton
+    import bench.benchmark
 
     if len(sys.argv) != 2:
         print("Usage: python oxigraph.py <turtle_file>")
         sys.exit(1)
 
     turtle_file = sys.argv[1]
-    bench.skeleton.ttlname = turtle_file
+    bench.benchmark.ttlname = turtle_file
 
     benc_res = benchmark("Oxigraph", init, load, query)
     bench_report("Oxigraph", *benc_res)

@@ -86,12 +86,10 @@ select = [ "ALL" ]
 unfixable = []
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*.py" = [ "S101" ]
-"demo/*.py" = [ "T201" ]
-"skeleton.py" = [
-	"S311",		# pseudo-random not suitable for crypto
-	"T201",		# uses print(); TODO: change to logging
-]
+"bench/*.py" = [ "PLR2004", "PLW0603", "T201" ]
+"bench/benchmark.py" = [ "INP001", "S311", "T201" ]
+"demo/*.py" = [ "INP001", "T201" ]
+"tests/*.py" = [ "INP001", "PLR2004", "S101" ]
 
 [tool.ruff.lint.isort]
 case-sensitive = true

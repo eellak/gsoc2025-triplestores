@@ -60,6 +60,8 @@ def main() -> None:
         with suppress(Exception):
             store.stop_server()
 
+    return None
+
 
 if __name__ == "__main__":
     main()
