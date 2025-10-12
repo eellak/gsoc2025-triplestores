@@ -163,7 +163,8 @@ def test_execute():
     # ASK
     ask_q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
     ask_res = store.execute(ask_q)
-    assert isinstance(ask_res, bool) and ask_res is True
+    assert isinstance(ask_res, bool)
+    assert ask_res is True
 
     # SELECT
     select_q = f"""
@@ -174,7 +175,8 @@ def test_execute():
         }}
     """
     sel = store.execute(select_q)
-    assert isinstance(sel, list) and len(sel) == 1
+    assert isinstance(sel, list)
+    assert len(sel) == 1
     subjects = [str(r["s"]).strip("<>") for r in sel]
     assert SUBJECT in subjects
 
@@ -194,7 +196,9 @@ def test_execute():
     """
     cons = store.execute(construct_q)
     assert isinstance(cons, str)
-    assert SUBJECT in cons and PREDICATE in cons and OBJECT in cons
+    assert SUBJECT in cons
+    assert PREDICATE in cons
+    assert OBJECT in cons
 
     # DELETE DATA
     delete_q = f"DELETE DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
