@@ -33,9 +33,10 @@ def is_blazegraph_available():
     try:
         url = config["base_url"]
         response = requests.get(url, timeout=2)
-        return response.status_code in {200, 404}
     except requests.RequestException:
         return False
+    else:
+        return response.status_code in {200, 404}
 
 
 pytestmark = pytest.mark.skipif(

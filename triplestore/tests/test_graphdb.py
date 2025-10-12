@@ -28,9 +28,10 @@ def is_graphdb_available():
     try:
         url = detect_graphdb_url() + "/repositories"
         response = requests.get(url, timeout=2)
-        return response.status_code in {200, 401, 403}
     except requests.RequestException:
         return False
+    else:
+        return response.status_code in {200, 401, 403}
 
 
 pytestmark = pytest.mark.skipif(

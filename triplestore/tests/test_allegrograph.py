@@ -39,9 +39,10 @@ def is_allegrograph_available():
     try:
         url = config["base_url"]
         response = requests.get(url, timeout=2)
-        return response.status_code in {200, 401, 403}
     except requests.RequestException:
         return False
+    else:
+        return response.status_code in {200, 401, 403}
 
 
 pytestmark = pytest.mark.skipif(
