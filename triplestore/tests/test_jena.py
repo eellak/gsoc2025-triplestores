@@ -177,7 +177,7 @@ def test_execute():
     out = store.execute(q)
     assert out is None  # updates should return None
 
-    # --- ASK (boolean)
+    # --- ASK
     ask_q = q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
     ask_res = store.execute(q)
     assert isinstance(ask_res, bool)
