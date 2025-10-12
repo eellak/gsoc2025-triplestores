@@ -155,50 +155,50 @@ def test_execute():
     graph = config["graph"]
 
     # INSERT DATA
-    insert_q = f"INSERT DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
-    out = store.execute(insert_q)
+    q = f"INSERT DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    out = store.execute(q)
     assert out is None
 
     # ASK
-    ask_q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
-    ask_res = store.execute(ask_q)
+    ask_q = q = f"ASK WHERE {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    ask_res = store.execute(q)
     assert isinstance(ask_res, bool)
     assert ask_res is True
 
     # SELECT
-    select_q = f"""
+    q = f"""
         SELECT ?s WHERE {{
             GRAPH <{graph}> {{
                 ?s <{PREDICATE}> <{OBJECT}>
             }}
         }}
     """
-    sel = store.execute(select_q)
+    sel = store.execute(q)
     assert isinstance(sel, list)
     assert len(sel) == 1
     subjects = [str(r["s"]).strip("<>") for r in sel]
     assert SUBJECT in subjects
 
     # DESCRIBE
-    describe_q = f"DESCRIBE <{SUBJECT}>"
-    desc = store.execute(describe_q)
+    q = f"DESCRIBE <{SUBJECT}>"
+    desc = store.execute(q)
     assert isinstance(desc, str)
     assert SUBJECT in desc
 
     # CONSTRUCT
-    construct_q = f"""
+    q = f"""
         CONSTRUCT {{ ?s ?p ?o }}
         WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}
     """
-    cons = store.execute(construct_q)
+    cons = store.execute(q)
     assert isinstance(cons, str)
     assert SUBJECT in cons
     assert PREDICATE in cons
     assert OBJECT in cons
 
     # DELETE DATA
-    delete_q = f"DELETE DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
-    del_out = store.execute(delete_q)
+    q = f"DELETE DATA {{ GRAPH <{graph}> {{ <{SUBJECT}> <{PREDICATE}> <{OBJECT}> }} }}"
+    del_out = store.execute(q)
     assert del_out is None
     assert store.execute(ask_q) is False
 
@@ -211,7 +211,7 @@ def test_execute():
             }}
         }}
     """)
-    clear_q = f"CLEAR GRAPH <{graph}>"
-    clr_out = store.execute(clear_q)
+    q = f"CLEAR GRAPH <{graph}>"
+    clr_out = store.execute(q)
     assert clr_out is None
     assert store.execute(f"ASK WHERE {{ GRAPH <{graph}> {{ ?s ?p ?o }} }}") is False
