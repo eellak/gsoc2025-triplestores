@@ -169,7 +169,6 @@ def gen_all_data(config):
 def print_all_triples(outfile):
     print("@prefix s: <http://rdf.zvr.invalid/demofamilydata/> .", file=outfile)
     print("@prefix d: <http://rdf.zvr.invalid/demofamilydata/data/> .", file=outfile)
-    print("@prefix d: <http://example.org/data/> .", file=outfile)
     print(file=outfile)
 
     for person in Person.instances:
