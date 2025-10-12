@@ -49,12 +49,54 @@ dev = [
     "build"
 ]
 
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-
 [project.entry-points."triplestore.backends"]
 allegrograph = "triplestore.backends.allegrograph:AllegroGraph"
 blazegraph   = "triplestore.backends.blazegraph:Blazegraph"
 graphdb      = "triplestore.backends.graphdb:GraphDB"
 jena         = "triplestore.backends.jena:Jena"
 oxigraph     = "triplestore.backends.oxigraph:Oxigraph"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+
+[tool.ruff]
+fix = false
+indent-width = 4
+line-length = 150
+# output-format = "full"
+output-format = "grouped"
+preview = true
+required-version = ">=0.9"
+show-fixes = true
+
+[tool.ruff.format]
+docstring-code-format = false
+indent-style = "space"
+line-ending = "native"
+preview = true
+quote-style = "double"
+skip-magic-trailing-comma = false
+
+[tool.ruff.lint]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+fixable = ["ALL"]
+ignore = [ "AIR", "ANN", "D", "NPY", "PD", "COM812", "RUF012" ]
+preview = true
+select = [ "ALL" ]
+unfixable = []
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = [ "S101" ]
+"demo/*.py" = [ "T201" ]
+"skeleton.py" = [
+	"S311",		# pseudo-random not suitable for crypto
+	"T201",		# uses print(); TODO: change to logging
+]
+
+[tool.ruff.lint.isort]
+case-sensitive = true
+force-sort-within-sections = false
+from-first = false
+lines-between-types = 0
+split-on-trailing-comma = false
+
