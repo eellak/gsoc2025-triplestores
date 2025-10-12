@@ -13,6 +13,7 @@ import time
 from pathlib import Path
 
 import requests
+
 from triplestore import Triplestore
 
 SUBJECT = "http://example.org/s"

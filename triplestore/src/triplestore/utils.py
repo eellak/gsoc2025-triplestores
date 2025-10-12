@@ -13,7 +13,6 @@ if TYPE_CHECKING:
 
 from triplestore.exceptions import TriplestoreMissingConfigValue
 
-
 logger = logging.getLogger(__name__)
 
 

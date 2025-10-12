@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 import requests
+
 from triplestore import Triplestore
 
 # SPARQL Test Data
