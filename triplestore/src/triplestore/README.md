@@ -36,10 +36,10 @@ All concrete backends inherit from `TriplestoreBackend` and must implement a com
 - `load(filename: str) -> None`:
 Load RDF data from a Turtle (`.ttl`) file into the store.
 
-- `add(subject: str, predicate: str, object: str) -> None`: 
+- `add(subj: str, pred: str, obj: str) -> None`: 
 Insert a single triple.
 
-- `delete(subject: str, predicate: str, object: str) -> None`:
+- `delete(subj: str, pred: str, obj: str) -> None`:
 Remove a single triple.
 
 - `query(sparql: str) -> Any`: 

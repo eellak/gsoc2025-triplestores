@@ -3,7 +3,7 @@
 
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from pyoxigraph import DefaultGraph, NamedNode, Quad, QueryBoolean, QueryTriples, RdfFormat, Store
 
@@ -38,7 +38,7 @@ class Oxigraph(TriplestoreBackend):
 
         super().__init__(configuration)
         self.store = Store()
-        self.graph_uri: Optional[str] = configuration["graph"]
+        self.graph_uri: str | None = configuration["graph"]
         if self.graph_uri:
             self.store.add_graph(NamedNode(self.graph_uri))
 

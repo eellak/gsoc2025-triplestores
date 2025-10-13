@@ -19,21 +19,18 @@ class TriplestoreBackend(ABC):
         """
         Load RDF triples from a file into the triplestore.
         """
-        pass
 
     @abstractmethod
-    def add(self, subject: str, predicate: str, object: str) -> None:
+    def add(self, subj: str, pred: str, obj: str) -> None:
         """
         Add a single RDF triple to the store.
         """
-        pass
 
     @abstractmethod
-    def delete(self, subject: str, predicate: str, object: str) -> None:
+    def delete(self, subj: str, pred: str, obj: str) -> None:
         """
         Delete a single RDF triple from the store.
         """
-        pass
 
     @abstractmethod
     def query(self, sparql: str) -> Any:
@@ -42,7 +39,6 @@ class TriplestoreBackend(ABC):
 
         - SELECT -> typically returns a list of dicts with variable bindings
         """
-        pass
 
     @abstractmethod
     def execute(self, sparql: str) -> Any:
@@ -57,11 +53,9 @@ class TriplestoreBackend(ABC):
             - str (RDF in Turtle) for CONSTRUCT/DESCRIBE
             - None for UPDATE operations
         """
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """
         Remove all triples from the triplestore.
         """
-        pass
