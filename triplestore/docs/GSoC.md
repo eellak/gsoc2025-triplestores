@@ -143,6 +143,15 @@ To provide flexibility, users can choose to install the unified abstraction laye
 
 A combined extra, `triplestore[all]`, installs all supported backends simultaneously for developers who wish to experiment across multiple systems. This modular packaging design reduces unnecessary dependencies and aligns with Python’s best practices for extensible, backend-agnostic libraries.
 
+### Benchmarking
+To evaluate the impact of the unified abstraction layer, an extensive benchmarking study was conducted across five RDF triplestores — **AllegroGraph, Apache Jena, Blazegraph, GraphDB, and Oxigraph** — both before and after integrating the `triplestore` library.
+
+The benchmarking framework, implemented in [skeleton.py](/triplestore/bench/skeleton.py), ensured consistent testing conditions through nanosecond-precision timers and a standardized execution workflow. Each benchmark followed the same sequence: backend initialization, data loading from a Turtle (`.ttl`) file, and SPARQL query execution on a generated family dataset. Datasets of three sizes (≈20k, 200k, and 2M triples) were created using [generate-data.py](/data/generate/generate-data.py).
+
+The measurements captured loading, query, and overall execution time for each triplestore. The results demonstrated that, while raw timings varied depending on the backend, the abstraction layer introduced negligible or no performance penalty in most cases. AllegroGraph, GraphDB, and Oxigraph maintained nearly identical or slightly improved performance. Blazegraph showed stable behavior on small datasets but slower ingestion on large ones, a limitation inherent to its internal batching. Apache Jena exhibited longer load times, mainly because the Fuseki server startup is now handled automatically and thus included in the total runtime.
+
+Despite these differences, the unified library significantly improved usability. Previously, developers had to manually manage HTTP endpoints and upload datasets through backend-specific commands. Now, library's operations fully abstract these steps, providing a consistent API across all systems. Overall, the benchmarking confirmed that the abstraction layer achieves a major gain in consistency and ease of use without compromising efficiency.
+
 ## Results and Outcomes
 The final implementation closely followed the goals outlined in the original proposal while introducing several improvements in design, structure, and extensibility.
 
@@ -169,6 +178,10 @@ An entirely new exception hierarchy was introduced (`exceptions.py`) to enhance 
 #### Documentation and Packaging Improvements
 The documentation was written directly in Markdown and integrated into the repository, replacing the originally proposed LaTeX format. This choice improved maintainability and accessibility for contributors.
 In addition, the project introduced modular packaging via `pyproject.toml`, allowing users to install only the specific triplestore backends they require (e.g., `triplestore[jena]`, `triplestore[graphdb]`, or `triplestore[all]`). This approach reduces dependencies and improves flexibility for both users and developers.
+
+## Future Work
+Building upon the benchmarking outcomes, several directions for further enhancement can be explored.
+In terms of performance, introducing concurrent data loading mechanisms and incorporating memory profiling could significantly accelerate dataset ingestion for large RDF graphs. Functionally, future iterations of the library could extend the `add()` operation to support literal additions, and expand the `load()` method to recognize multiple RDF syntaxes such as N-Triples, RDF/XML, and JSON-LD. Such improvements would make the abstraction layer more versatile and efficient, reinforcing its goal of providing a seamless and unified interface across diverse triplestore systems.
 
 ## Conclusion
 Participating in Google Summer of Code 2025 with Open Technologies Alliance (GFOSS) has been an immensely valuable experience, both technically and personally. Throughout this project, I had the opportunity to deepen my understanding of Semantic Web technologies, RDF triplestores, and SPARQL query processing, while also strengthening my skills in software design, Python development, and modular packaging.
