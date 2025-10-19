@@ -63,6 +63,8 @@ This makes experimentation and adoption harder for developers, researchers, and 
 - [REFERENCE.md](./triplestore/docs/REFERENCE.md): Detailed API reference
 - [HOWTO.md](./triplestore/docs/HOWTO.md): Usage and configuration guide
 - [alternatives.md](./alternatives.md): Candidate triplestores and their characteristics
+- [GSoC.md](./docs/GSoC.md): Project Report
+- [BENCHMARKING.md](./docs/BENCHMARKING.md): Benchmarking report
 
 ## Candidates
 
