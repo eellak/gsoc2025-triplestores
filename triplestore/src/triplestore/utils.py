@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
 
 from triplestore.exceptions import TriplestoreMissingConfigValue
-
+DEFAULT_REQUEST_TIMEOUT = 30
 logger = logging.getLogger(__name__)
 
 

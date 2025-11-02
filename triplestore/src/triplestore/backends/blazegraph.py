@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
-from triplestore.utils import validate_config
+from triplestore.utils import DEFAULT_REQUEST_TIMEOUT, validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class Blazegraph(TriplestoreBackend):
 
         data = Path(filename).read_bytes()
         params = {"context-uri": self.graph_uri} if self.graph_uri else {}
-        response = requests.post(self.update_url, headers=self.headers_load, data=data, params=params, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_load, data=data, params=params, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code not in {200, 204, 201}:
             msg = f"[Blazegraph] Load failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
@@ -147,7 +147,7 @@ class Blazegraph(TriplestoreBackend):
 
         # SELECT / ASK
         if query_type in {"SELECT", "ASK"}:
-            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=None)
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[Blazegraph] Query failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -160,7 +160,7 @@ class Blazegraph(TriplestoreBackend):
 
         # CONSTRUCT / DESCRIBE → RDF (Turtle)
         if query_type in {"CONSTRUCT", "DESCRIBE"}:
-            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, timeout=None)
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[Blazegraph] SPARQL query failed: {response.status_code}\n{response.text}"
                 raise RuntimeError(msg)
@@ -192,7 +192,7 @@ class Blazegraph(TriplestoreBackend):
         RuntimeError
             If the query fails or the response is invalid.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=None)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code != 200:
             msg = f"[Blazegraph] SPARQL query failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
@@ -225,7 +225,7 @@ class Blazegraph(TriplestoreBackend):
         RuntimeError
             If the update fails with a non-success HTTP status.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code not in {200, 204, 201}:
             msg = f"[Blazegraph] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)

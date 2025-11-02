@@ -8,7 +8,7 @@ from typing import Any
 import requests
 
 from triplestore.base import TriplestoreBackend
-from triplestore.utils import detect_graphdb_url, validate_config
+from triplestore.utils import DEFAULT_REQUEST_TIMEOUT, detect_graphdb_url, validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +87,7 @@ class GraphDB(TriplestoreBackend):
         params = {}
         if self.graph_uri:
             params["context"] = f"<{self.graph_uri}>"
-        response = requests.post(self.update_url, headers=self.headers_load, params=params, data=rdf_data, auth=self.auth, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_load, params=params, data=rdf_data, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
         if response.status_code not in {200, 204, 201}:
             msg = f"[GraphDB] Load failed with status {response.status_code}:\n{response.text}"
@@ -150,7 +150,7 @@ class GraphDB(TriplestoreBackend):
         RuntimeError
             If the query fails or the server returns an error response.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
         if response.status_code != 200:
             msg = f"[GraphDB] SPARQL query failed: {response.status_code}\n{response.text}"
@@ -187,7 +187,7 @@ class GraphDB(TriplestoreBackend):
 
         # SELECT / ASK
         if query_type in {"SELECT", "ASK"}:
-            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[GraphDB] Query failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -199,7 +199,7 @@ class GraphDB(TriplestoreBackend):
 
         # CONSTRUCT / DESCRIBE
         if query_type in {"CONSTRUCT", "DESCRIBE"}:
-            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[GraphDB] Query failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -239,7 +239,7 @@ class GraphDB(TriplestoreBackend):
         RuntimeError
             If the update operation fails with a non-success status code.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code not in {200, 204, 201}:
             msg = f"[GraphDB] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
