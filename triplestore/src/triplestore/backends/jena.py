@@ -12,7 +12,7 @@ import requests
 
 from triplestore.backends.jena_utils import add_graph_clause_if_needed, create_config_and_run_fuseki, first_keyword, stop_fuseki_server
 from triplestore.base import TriplestoreBackend
-from triplestore.utils import validate_config
+from triplestore.utils import DEFAULT_REQUEST_TIMEOUT, validate_config
 
 
 class Jena(TriplestoreBackend):
@@ -162,7 +162,7 @@ class Jena(TriplestoreBackend):
             else sparql
         )
 
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=None)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=(60, DEFAULT_REQUEST_TIMEOUT))
 
         if response.status_code != 200:
             msg = f"[APACHE JENA] Query failed with status {response.status_code}:\n{response.text}"
@@ -206,7 +206,7 @@ class Jena(TriplestoreBackend):
 
         # SELECT / ASK
         if kw in {"SELECT", "ASK"}:
-            response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": final_query}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[APACHE JENA] Query failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -219,7 +219,7 @@ class Jena(TriplestoreBackend):
 
         #  CONSTRUCT / DESCRIBE (graph queries → RDF)
         if kw in {"CONSTRUCT", "DESCRIBE"}:
-            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": final_query}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": final_query}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code != 200:
                 msg = f"[APACHE JENA] Query failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -227,7 +227,7 @@ class Jena(TriplestoreBackend):
 
         # UPDATE family (INSERT, DELETE, CLEAR, LOAD, CREATE, DROP, MOVE, COPY, ADD, MODIFY, WITH)
         if kw in {"WITH", "INSERT", "DELETE", "LOAD", "CLEAR", "CREATE", "DROP", "MOVE", "COPY", "ADD", "MODIFY"}:
-            response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
+            response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
             if response.status_code not in {200, 204}:
                 msg = f"[APACHE JENA] Update failed {response.status_code}:\n{response.text}"
                 raise RuntimeError(msg)
@@ -260,7 +260,7 @@ class Jena(TriplestoreBackend):
         RuntimeError
             If the update operation fails with a non-success status code.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_update, data=sparql, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
         if response.status_code not in {200, 204}:
             msg = f"[APACHE JENA] Update failed with status {response.status_code}:\n{response.text}"

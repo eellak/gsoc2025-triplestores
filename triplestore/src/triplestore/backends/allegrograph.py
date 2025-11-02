@@ -11,7 +11,7 @@ import requests
 from franz.openrdf.connect import ag_connect
 
 from triplestore.base import TriplestoreBackend
-from triplestore.utils import validate_config
+from triplestore.utils import DEFAULT_REQUEST_TIMEOUT, validate_config
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +134,7 @@ class AllegroGraph(TriplestoreBackend):
             params["context"] = f"<{self.graph_uri}>"
 
         with path.open("rb") as f:
-            response = requests.post(self.load_url, params=params, data=f, headers=self.headers_load, auth=self.auth, timeout=None)
+            response = requests.post(self.load_url, params=params, data=f, headers=self.headers_load, auth=self.auth, timeout=DEFA)
 
         if response.status_code not in {200, 201, 204}:
             msg = f"[AllegroGraph] GSP load failed with status {response.status_code}:\n{response.text}"
@@ -197,7 +197,7 @@ class AllegroGraph(TriplestoreBackend):
         RuntimeError
             If the query fails or the server returns an error response.
         """
-        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+        response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
         if response.status_code != 200:
             msg = f"[AllegroGraph] SPARQL query failed: {response.status_code}\n{response.text}"
@@ -237,7 +237,7 @@ class AllegroGraph(TriplestoreBackend):
 
         # SELECT / ASK
         if query_type in {"SELECT", "ASK"}:
-            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers=self.headers_query, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
             if response.status_code != 200:
                 msg = f"[AllegroGraph] Query failed {response.status_code}:\n{response.text}"
@@ -251,7 +251,7 @@ class AllegroGraph(TriplestoreBackend):
 
         # CONSTRUCT / DESCRIBE
         if query_type in {"CONSTRUCT", "DESCRIBE"}:
-            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=None)
+            response = requests.post(self.query_url, headers={"Accept": "text/turtle"}, data={"query": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
 
             if response.status_code != 200:
                 msg = f"[AllegroGraph] Graph query failed {response.status_code}:\n{response.text}"
@@ -291,7 +291,7 @@ class AllegroGraph(TriplestoreBackend):
         RuntimeError
             If the update request fails.
         """
-        response = requests.post(self.update_url, headers=self.headers_update, data={"update": sparql}, auth=self.auth, timeout=None)
+        response = requests.post(self.update_url, headers=self.headers_update, data={"update": sparql}, auth=self.auth, timeout=DEFAULT_REQUEST_TIMEOUT)
         if response.status_code not in {200, 204, 201}:
             msg = f"[AllegroGraph] SPARQL update failed: {response.status_code}\n{response.text}"
             raise RuntimeError(msg)
